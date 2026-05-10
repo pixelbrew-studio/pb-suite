@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Remove pb-suite symlinks from ~/.claude/commands/. Leaves regular files alone.
+
+set -euo pipefail
+
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+COMMANDS_DIR="$REPO_DIR/commands"
+TARGET_DIR="${CLAUDE_COMMANDS_DIR:-$HOME/.claude/commands}"
+
+removed=0
+left_alone=0
+
+for src in "$COMMANDS_DIR"/pb-*.md; do
+  [ -f "$src" ] || continue
+  name="$(basename "$src")"
+  dst="$TARGET_DIR/$name"
+
+  if [ -L "$dst" ] && [ "$(readlink "$dst")" = "$src" ]; then
+    rm "$dst"
+    removed=$((removed + 1))
+  elif [ -e "$dst" ]; then
+    left_alone=$((left_alone + 1))
+  fi
+done
+
+echo "pb-suite: removed=$removed left_alone=$left_alone target=$TARGET_DIR"
+[ "$left_alone" -gt 0 ] && echo "  (regular files or foreign symlinks were not touched)"
+exit 0

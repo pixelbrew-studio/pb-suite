@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# Install pb-suite commands into ~/.claude/commands/ as symlinks pointing to this repo.
+# Idempotent. Existing non-symlink files are backed up to <name>.bak.<timestamp>.
+
+set -euo pipefail
+
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+COMMANDS_DIR="$REPO_DIR/commands"
+TARGET_DIR="${CLAUDE_COMMANDS_DIR:-$HOME/.claude/commands}"
+
+if [ ! -d "$COMMANDS_DIR" ]; then
+  echo "error: $COMMANDS_DIR not found" >&2
+  exit 1
+fi
+
+mkdir -p "$TARGET_DIR"
+
+stamp="$(date +%Y%m%d%H%M%S)"
+linked=0
+skipped=0
+backed_up=0
+
+for src in "$COMMANDS_DIR"/pb-*.md; do
+  [ -f "$src" ] || continue
+  name="$(basename "$src")"
+  dst="$TARGET_DIR/$name"
+
+  if [ -L "$dst" ]; then
+    current="$(readlink "$dst")"
+    if [ "$current" = "$src" ]; then
+      skipped=$((skipped + 1))
+      continue
+    fi
+    rm "$dst"
+  elif [ -e "$dst" ]; then
+    mv "$dst" "$dst.bak.$stamp"
+    backed_up=$((backed_up + 1))
+  fi
+
+  ln -s "$src" "$dst"
+  linked=$((linked + 1))
+done
+
+echo "pb-suite: linked=$linked skipped=$skipped backed_up=$backed_up target=$TARGET_DIR"
+[ "$backed_up" -gt 0 ] && echo "  backups suffix: .bak.$stamp"
+exit 0
