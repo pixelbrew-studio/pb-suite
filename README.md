@@ -10,6 +10,17 @@ Lichte vervanger voor Garry Tan's gstack — een hand-picked set Claude Code sla
 | `/pb-design-review` | Pre-landing UI review — a11y, hierarchy, spacing, typography, AI-slop |
 | `/pb-investigate` | Root-cause debugging — iron law: no fix without investigation |
 | `/pb-cso` | Pre-launch security audit — OWASP top 10 + STRIDE met confidence-gate |
+| `/pb-ship` | Pre-merge orchestrator — pb-review + e2e-from-pr verify-mode + ship/wait/decide gate, nooit auto-merge |
+
+## Verify vs regress (pb-ship)
+
+`e2e-from-pr` schrijft tests standaard naar de permanente suite — die groeit dan monotoon en CI wordt traag. `/pb-ship` lost dat op door twee modes:
+
+- **default (verify)** — specs draaien één keer en worden gerevert. De regression-suite blijft de grootte die hij was.
+- **--regress** — specs landen permanent. Bewuste keuze voor features die echt long-lived coverage nodig hebben.
+- **--dry** — alles draaien, geen merge-prompt.
+
+Verify-mode vereist een clean working tree (de revert-stap leunt erop).
 
 ## Severity-model (suite-breed)
 
