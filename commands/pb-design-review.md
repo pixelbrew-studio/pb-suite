@@ -21,16 +21,9 @@ The `ux-design` skill remains the canonical reference for the underlying Refacto
 Same scope-detection as `pb-review`: against `origin/main` for feature branches, against upstream when on main itself.
 
 ```bash
-CURRENT=$(git branch --show-current 2>/dev/null)
-if [ "$CURRENT" = "main" ] || [ "$CURRENT" = "master" ]; then
-  BASE=$(git rev-parse --verify @{u} 2>/dev/null || echo "HEAD~1")
-else
-  BASE=$(git rev-parse --verify origin/main 2>/dev/null \
-    || git rev-parse --verify origin/master 2>/dev/null \
-    || git rev-parse --verify main 2>/dev/null \
-    || git rev-parse --verify master 2>/dev/null \
-    || echo "HEAD~1")
-fi
+PB_CMD="$HOME/.claude/commands/pb-design-review.md"
+PB_SUITE=$(dirname "$(dirname "$(readlink "$PB_CMD" 2>/dev/null || echo "$PB_CMD")")")
+source "$PB_SUITE/scripts/lib/scope.sh"
 git diff --name-only "$BASE"...HEAD | grep -E '\.(tsx?|jsx?|vue|svelte|astro|css|scss|sass|module\.css|html)$|tailwind\.config|globals\.css|tokens\.(ts|json|css)' || true
 ```
 

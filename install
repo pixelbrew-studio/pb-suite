@@ -44,6 +44,16 @@ done
 echo "pb-suite: linked=$linked skipped=$skipped backed_up=$backed_up target=$TARGET_DIR"
 [ "$backed_up" -gt 0 ] && echo "  backups suffix: .bak.$stamp"
 
+if [ -f "$REPO_DIR/VERSION" ]; then
+  CURRENT_VERSION=$(cat "$REPO_DIR/VERSION")
+  STATE_FILE="$HOME/.pb-suite-version"
+  INSTALLED_VERSION=$(cat "$STATE_FILE" 2>/dev/null || echo "none")
+  if [ "$INSTALLED_VERSION" != "$CURRENT_VERSION" ]; then
+    echo "pb-suite: version $INSTALLED_VERSION -> $CURRENT_VERSION"
+    echo "$CURRENT_VERSION" > "$STATE_FILE"
+  fi
+fi
+
 if [ -f "$REPO_DIR/package.json" ]; then
   if [ ! -d "$REPO_DIR/node_modules" ]; then
     echo "pb-suite: first-time setup, installing deps (bun install)..."

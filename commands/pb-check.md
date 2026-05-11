@@ -19,16 +19,9 @@ The point of running them together is the **Lessons** section at the end: patter
 Determine what is in the diff:
 
 ```bash
-CURRENT=$(git branch --show-current 2>/dev/null)
-if [ "$CURRENT" = "main" ] || [ "$CURRENT" = "master" ]; then
-  BASE=$(git rev-parse --verify @{u} 2>/dev/null || echo "HEAD~1")
-else
-  BASE=$(git rev-parse --verify origin/main 2>/dev/null \
-    || git rev-parse --verify origin/master 2>/dev/null \
-    || git rev-parse --verify main 2>/dev/null \
-    || git rev-parse --verify master 2>/dev/null \
-    || echo "HEAD~1")
-fi
+PB_CMD="$HOME/.claude/commands/pb-check.md"
+PB_SUITE=$(dirname "$(dirname "$(readlink "$PB_CMD" 2>/dev/null || echo "$PB_CMD")")")
+source "$PB_SUITE/scripts/lib/scope.sh"
 git diff --name-only "$BASE"...HEAD > /tmp/pb-check-files.txt
 UI=$(grep -E '\.(tsx?|jsx?|vue|svelte|astro|css|scss|html)$|tailwind\.config|globals\.css' /tmp/pb-check-files.txt | wc -l | tr -d ' ')
 echo "Files changed: $(wc -l < /tmp/pb-check-files.txt | tr -d ' ') (UI: $UI)"

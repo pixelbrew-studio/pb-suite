@@ -13,20 +13,13 @@ Focus on what breaks in production: correctness, safety, completeness. Style nit
 
 ### 1. Determine scope
 
-For a feature branch, review against the integration branch (`origin/main` or equivalent), not the branch's own remote — `@{u}` for a feature branch resolves to `origin/<feature>` and produces an empty diff. Only fall back to upstream when you are reviewing unpushed commits on `main`/`master` itself.
+Use the shared scope-detection helper. For a feature branch it diffs against the integration branch (`origin/main` or equivalent), not the branch's own remote — `@{u}` on a feature branch resolves to `origin/<feature>` and produces an empty diff. Only on `main`/`master` does it fall back to upstream (reviewing unpushed commits).
 
 ```bash
+PB_CMD="$HOME/.claude/commands/pb-review.md"
+PB_SUITE=$(dirname "$(dirname "$(readlink "$PB_CMD" 2>/dev/null || echo "$PB_CMD")")")
+source "$PB_SUITE/scripts/lib/scope.sh"
 git status -s
-CURRENT=$(git branch --show-current 2>/dev/null)
-if [ "$CURRENT" = "main" ] || [ "$CURRENT" = "master" ]; then
-  BASE=$(git rev-parse --verify @{u} 2>/dev/null || echo "HEAD~1")
-else
-  BASE=$(git rev-parse --verify origin/main 2>/dev/null \
-    || git rev-parse --verify origin/master 2>/dev/null \
-    || git rev-parse --verify main 2>/dev/null \
-    || git rev-parse --verify master 2>/dev/null \
-    || echo "HEAD~1")
-fi
 git diff --stat "$BASE"...HEAD
 ```
 
