@@ -8,7 +8,7 @@ argument-hint: "<url> [-s|--screenshot [path]] [--raw] [--full] [--timeout secs]
 
 Read a URL via headless Chromium and return clean markdown. Backed by `pb-suite/scripts/browse.ts` — Bun + Playwright + Turndown, fully under your control. No MCP plugin needed, no WebFetch prompt-tax.
 
-Replaces gstack's heavyweight `/browse` for the routine "lees deze URL" case. Use the gstack version when you need long-lived daemon state, anti-bot routing, headed-mode interaction, CAPTCHA handoff, or file downloads behind auth.
+For multi-step flows (login, form fills, CAPTCHA handoff): write a Playwright spec in the project's e2e suite or extend `scripts/browse.ts`. This command stays scoped to single-URL extraction.
 
 ## Steps
 
@@ -67,4 +67,4 @@ If truncated, mention `--full` as the way to see the full body.
 - **404 / 410 / 5xx** — the script still extracts content (the error page). Note the status in your report if it's evident from the title or body.
 - **Chromium missing** — script fails on first run if `install` has not bootstrapped deps. Tell the user to run `$PB_SUITE/install`.
 
-This command does not handle interactive flows (login, multi-step forms, MFA). For that, escalate to gstack `/browse` with its handoff pattern.
+This command does not handle interactive flows (login, multi-step forms, MFA). For those: write a Playwright spec in the project's e2e suite, or extend `scripts/browse.ts` to accept a `--storage-state` flag (same pattern `pb-qa` uses).

@@ -79,7 +79,7 @@ End with: which BLOCKER to investigate first? Suggest `pb-investigate <symptom>`
 
 ### 6. Limits
 
-- No interaction — pb-qa doesn't click, fill forms, or scroll. It visits and observes. For multi-step flows, escalate to gstack `/browse` or write a Playwright spec via `e2e-from-pr`.
+- No interaction — pb-qa doesn't click, fill forms, or scroll. It visits and observes. For multi-step flows, write a Playwright spec via `e2e-from-pr`.
 - No auto-fix — by design. Findings are evidence, not edits.
 - Discovery is shallow — only follows `<a href>` on the first page. SPAs with route-based code-splitting may need explicit `--routes`.
 - Screenshots can be heavy — `--no-screenshots` for a fast scan, `--full-page-screenshots` for the full body of each route (default is viewport only).

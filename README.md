@@ -80,4 +80,4 @@ Als je een nieuwe pb-command toevoegt, leg 'm in `commands/pb-<naam>.md` en run 
 
 ## Niet in scope
 
-Geen multi-agent dispatch, geen learning-files, geen "specialist personas", geen pre-flight bash met config-state. Als je dat wil, gebruik gstack zelf.
+Geen multi-agent dispatch, geen learning-files, geen "specialist personas", geen pre-flight bash met config-state. Als de suite zwaardere browser-automation nodig heeft (anti-bot, headed mode, long-lived daemon), wordt dat een bewuste uitbreiding in `scripts/`, niet een meta-laag bovenop een externe tool.
