@@ -43,4 +43,18 @@ done
 
 echo "pb-suite: linked=$linked skipped=$skipped backed_up=$backed_up target=$TARGET_DIR"
 [ "$backed_up" -gt 0 ] && echo "  backups suffix: .bak.$stamp"
+
+if [ -f "$REPO_DIR/package.json" ]; then
+  if [ ! -d "$REPO_DIR/node_modules" ]; then
+    echo "pb-suite: first-time setup, installing deps (bun install)..."
+    (cd "$REPO_DIR" && bun install --silent)
+  fi
+
+  if [ ! -d "$HOME/Library/Caches/ms-playwright/chromium-"* ] 2>/dev/null \
+    && [ ! -d "$HOME/.cache/ms-playwright/chromium-"* ] 2>/dev/null; then
+    echo "pb-suite: installing Chromium for Playwright (~150MB, one-time)..."
+    (cd "$REPO_DIR" && bunx playwright install chromium)
+  fi
+fi
+
 exit 0

@@ -11,7 +11,7 @@ Lichte vervanger voor Garry Tan's gstack — een hand-picked set Claude Code sla
 | `/pb-investigate` | Root-cause debugging — iron law: no fix without investigation |
 | `/pb-cso` | Pre-launch security audit — OWASP top 10 + STRIDE met confidence-gate |
 | `/pb-ship` | Pre-merge orchestrator — pb-review + e2e-from-pr verify-mode + ship/wait/decide gate, nooit auto-merge |
-| `/pb-browse` | URL → markdown via WebFetch, fallback Playwright voor SPA's, optional screenshot |
+| `/pb-browse` | URL → markdown via headless Chromium (Bun + Playwright + Turndown), optional screenshot |
 
 ## Verify vs regress (pb-ship)
 
@@ -43,13 +43,18 @@ Plus een scope-creep check (`comm -13` op committed-vs-worktree files) zodat unr
 
 ## Install
 
-Lokaal symlinken naar `~/.claude/commands/`:
-
 ```bash
 ./install
 ```
 
-Dat is idempotent. Bestaande regular files worden gebackupt naar `<naam>.bak.<timestamp>` voor het symlinken. Deinstalleren met `./uninstall` (raakt alleen symlinks die naar deze repo wijzen).
+Wat het doet:
+1. Symlinkt `commands/pb-*.md` naar `~/.claude/commands/` (idempotent, backupt bestaande regular files)
+2. `bun install` als `node_modules/` ontbreekt (vereist voor `pb-browse` — Playwright + Turndown)
+3. `bunx playwright install chromium` als de browser-bundle ontbreekt (~150MB, one-time)
+
+Eerste run kost ~30s voor de Chromium-download. Volgende runs zijn instant.
+
+Deinstalleren met `./uninstall` (raakt alleen symlinks die naar deze repo wijzen).
 
 Custom locatie:
 

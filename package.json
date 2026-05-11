@@ -1,0 +1,16 @@
+{
+  "name": "pb-suite",
+  "private": true,
+  "type": "module",
+  "description": "Pixelbrew Claude Code commands — local scripts for pb-browse and future tools",
+  "scripts": {
+    "browse": "bun scripts/browse.ts"
+  },
+  "dependencies": {
+    "playwright": "^1.55.0",
+    "turndown": "^7.2.0"
+  },
+  "devDependencies": {
+    "@types/turndown": "^5.0.5"
+  }
+}
