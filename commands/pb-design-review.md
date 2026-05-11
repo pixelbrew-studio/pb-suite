@@ -12,6 +12,8 @@ If a URL is given as the argument, also do a live pass — open the page, screen
 
 Style targets are project-derived: read the project's existing components, tokens, and `CLAUDE.md` for the design system before applying any rule. Do not impose a style the project does not use.
 
+The focused-checks in step 3 are a review-distillation of the `ux-design` skill (Refactoring UI principles — hierarchy, spacing, typography, color, depth). That skill auto-triggers during UI editing and gives generic guidance; this command applies the same principles as a pre-merge audit on the diff. For the underlying theory or deeper reference, consult the `ux-design` skill directly.
+
 ## Steps
 
 ### 1. Determine scope
