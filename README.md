@@ -14,13 +14,14 @@ Lichte vervanger voor Garry Tan's gstack — een hand-picked set Claude Code sla
 
 ## Verify vs regress (pb-ship)
 
-`e2e-from-pr` schrijft tests standaard naar de permanente suite — die groeit dan monotoon en CI wordt traag. `/pb-ship` lost dat op door twee modes:
+`e2e-from-pr` schrijft tests standaard naar de permanente suite — die groeit dan monotoon en CI wordt traag. `/pb-ship` lost dat op door een classifier per spec:
 
-- **default (verify)** — specs draaien één keer en worden gerevert. De regression-suite blijft de grootte die hij was.
-- **--regress** — specs landen permanent. Bewuste keuze voor features die echt long-lived coverage nodig hebben.
-- **--dry** — alles draaien, geen merge-prompt.
+- **default (smart)** — elke nieuwe spec wordt geclassificeerd als `persist` (contract, security, load-bearing, fixed-bug regression), `revert` (visual, marketing-surface, observable, duplicate) of `ask` (borderline → AskUserQuestion). De suite groeit alleen met wat echt regress-waardig is.
+- **--regress** — alles permanent (skip classifier, override naar persist).
+- **--no-regress** — alles revert (skip classifier, oorspronkelijke verify-mode).
+- **--dry** — alles draaien + classifier, geen merge-prompt.
 
-Verify-mode vereist een clean working tree (de revert-stap leunt erop).
+Default-mode vereist een clean working tree (de selectieve revert leunt op het feit dat alle changes uit `e2e-from-pr` komen).
 
 ## Severity-model (suite-breed)
 

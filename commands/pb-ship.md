@@ -1,7 +1,7 @@
 ---
-description: Pre-merge orchestrator. Runs pb-review, verifies the test plan via e2e-from-pr in temporary mode, gates the merge with ship/wait/decide. Never auto-merges.
+description: Pre-merge orchestrator. Runs pb-review, runs e2e-from-pr, classifies each new spec as persist/revert/ask before cleanup, gates the merge with ship/wait/decide. Never auto-merges.
 allowed-tools: [Bash, Read, Edit, Skill, AskUserQuestion]
-argument-hint: "[--regress]  persist verify specs to permanent suite | [--dry]  run checks only, no merge prompt"
+argument-hint: "[--regress]  persist all new specs | [--no-regress]  revert all new specs | [--dry]  run checks only, no merge prompt"
 ---
 
 # pb-ship
@@ -10,17 +10,18 @@ Pre-merge orchestrator. Bundles `pb-review` + `e2e-from-pr` and offers a single 
 
 ## Modes
 
-- **default** — verify mode: `e2e-from-pr` writes specs, they run once, then they are deleted. The regression suite stays the size it was.
-- **--regress** — promote: specs land in the project's permanent test directory. Use only for features that genuinely need long-lived regression coverage.
+- **default** — smart classify: every new spec is judged on regress-worthiness. Persist the contracts, revert the throwaway verifies, ask on borderline. The regression suite only grows by what actually deserves to be there.
+- **--regress** — persist all new specs (skip classifier, treat everything as long-lived).
+- **--no-regress** — revert all new specs (skip classifier, treat everything as one-shot verification).
 - **--dry** — run review + verify, skip the merge prompt. Useful for "check before lunch, decide later".
 
-The flags combine: `--regress --dry` runs everything, persists specs, no prompt.
+The flags combine: `--regress --dry` persists everything and skips the prompt.
 
 ## Steps
 
 ### 1. Preflight
 
-Verify mode revert-cleanup needs a clean tree. Require it unless `--regress` is in `$ARGUMENTS`:
+Smart-classify and revert-cleanup both rely on knowing that every post-run change came from `e2e-from-pr`. Require a clean working tree unless `--regress` is in `$ARGUMENTS` (only `--regress` skips classification entirely, so it can tolerate a dirty tree):
 
 ```bash
 DIRTY=$(git status --porcelain)
@@ -28,7 +29,7 @@ case " $ARGUMENTS " in
   *" --regress "*) ;;
   *)
     if [ -n "$DIRTY" ]; then
-      echo "pb-ship: verify mode needs a clean working tree. Commit, stash, or use --regress."
+      echo "pb-ship: a clean working tree is required for the classifier to work. Commit, stash, or use --regress."
       exit 1
     fi
     ;;
@@ -58,28 +59,78 @@ The skill writes specs to the project's permanent test locations (`e2e/tests/`, 
 - All items pass → step 4
 - Any item fails → stop, surface the failure, do not prompt for merge
 
-### 4. Cleanup (verify mode only)
+### 4. Classify each new spec
 
-If `--regress` is NOT in `$ARGUMENTS`, revert everything `e2e-from-pr` wrote:
+Skip this step entirely if `--regress` is in `$ARGUMENTS` (everything stays) or `--no-regress` is in `$ARGUMENTS` (everything goes).
+
+Capture the deltas `e2e-from-pr` produced:
 
 ```bash
-case " $ARGUMENTS " in
-  *" --regress "*)
-    echo "pb-ship: --regress active, specs persisted to permanent suite"
-    ;;
-  *)
-    git checkout -- .
-    git clean -fd
-    echo "pb-ship: verify specs reverted, regression suite unchanged"
-    ;;
-esac
+NEW_FILES=$(git status --porcelain | awk '{print $2}')
 ```
 
-The clean-tree preflight in step 1 makes `git clean -fd` safe — every untracked file at this point came from `e2e-from-pr`.
+For each file in `NEW_FILES`, read it and classify against these heuristics. Apply all that match; if signals disagree, fall back to **ask**.
 
-### 5. Gate
+**persist** — at least one of:
+- Unit test (`*.test.ts`, `*.test.js`, `*.spec.ts` outside `e2e/`) of pure logic — formula, validator, transform, scorer, blender. No DOM, no network.
+- Asserts a security-sensitive contract — auth check on a route, RLS enforcement, webhook signature verification, secret handling.
+- Asserts a payment / billing / data-integrity path.
+- Block comment or test name explicitly references a fixed bug, regression, or commit SHA.
+- Touches a file listed under "preserved load-bearing files" (or equivalent) in the project's `CLAUDE.md`.
 
-If `--dry` is in `$ARGUMENTS`: skip to step 7.
+**revert** — at least one of:
+- Visual / touch-target / spacing / typography assertion (high design volatility).
+- File path under a marketing / landing / docs surface (`marketing/`, `(marketing)/`, `landing/`, `/blog/`).
+- Asserts an observable that is design-coupled — link text, copy strings, exact color values, layout heights.
+- Duplicates assertions already present in another spec (grep the existing suite for the same selector/data shape).
+- Only purpose is "page renders without errors" smoke that is already covered.
+
+**ask** — none of the above match decisively, or persist and revert both match:
+- E2E for a non-critical user flow.
+- API contract on a surface that is still iterating.
+- New test infrastructure that may stabilize later.
+
+Build a classification table:
+
+```
+File                                        | Verdict   | Reason
+e2e/tests/marketing-nav.spec.ts             | revert    | visual / marketing surface, design-volatile
+tests/blend.test.ts                         | persist   | pure logic on lib/forecast/blend (load-bearing)
+tests/ical-token-rotation.test.ts           | persist   | security contract — auth/token path
+e2e/tests/forecast-empty-state.spec.ts      | ask       | UX flow on iterating surface
+```
+
+For each **ask**, use the `AskUserQuestion` tool — one question per file, with three options: persist / revert / skip-and-ask-later. Apply the user's answer.
+
+Print the final table before cleanup.
+
+### 5. Selective cleanup
+
+Act on the classifications from step 4.
+
+```bash
+# Build two lists from the table:
+#   PERSIST_FILES — leave alone
+#   REVERT_FILES  — restore tracked, remove untracked
+
+while IFS= read -r f; do
+  [ -z "$f" ] && continue
+  if git ls-files --error-unmatch "$f" >/dev/null 2>&1; then
+    git checkout -- "$f"
+  else
+    rm -f "$f"
+  fi
+done <<< "$REVERT_FILES"
+```
+
+With `--regress`: skip cleanup entirely, everything persists.
+With `--no-regress`: revert all new files, equivalent to the original verify-mode.
+
+The clean-tree preflight in step 1 makes the per-file revert safe — every change at this point came from `e2e-from-pr`.
+
+### 6. Gate
+
+If `--dry` is in `$ARGUMENTS`: skip to step 8.
 
 Use the `AskUserQuestion` tool with these three options:
 
@@ -87,7 +138,7 @@ Use the `AskUserQuestion` tool with these three options:
 - **wait** — leave the PR open, exit
 - **decide** — log a CIL decision first (success criteria, meet-moment, evidence), then re-run `pb-ship` when ready
 
-### 6. Action
+### 7. Action
 
 Based on the user's choice:
 
@@ -95,14 +146,15 @@ Based on the user's choice:
 - **wait** → exit. Print the PR URL.
 - **decide** → invoke `cil-decide` with the PR context. After the decision lands, instruct the user to re-run `/pb-ship` when they are ready to ship.
 
-### 7. Report
+### 8. Report
 
 ```
 pb-ship: <shipped | left-open | decided | dry-pass | dry-fail | blocked>
-  pb-review: N findings (X BLOCKER, Y IMPORTANT, Z NIT)
-  verify:    K test-plan items, all pass (or: M failed)
-  mode:      verify | regress
-  PR:        <url>
+  pb-review:   N findings (X BLOCKER, Y IMPORTANT, Z NIT)
+  verify:      K test-plan items, all pass (or: M failed)
+  classify:    P persisted, R reverted, A asked
+  mode:        smart | regress | no-regress
+  PR:          <url>
 ```
 
 End with one sentence on what the next action is, if any. No emojis, no exclamation marks.
