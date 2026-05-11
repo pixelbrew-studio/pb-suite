@@ -12,6 +12,7 @@ Lichte vervanger voor Garry Tan's gstack — een hand-picked set Claude Code sla
 | `/pb-cso` | Pre-launch security audit — OWASP top 10 + STRIDE met confidence-gate |
 | `/pb-ship` | Pre-merge orchestrator — pb-review + e2e-from-pr verify-mode + ship/wait/decide gate, nooit auto-merge |
 | `/pb-browse` | URL → markdown via headless Chromium (Bun + Playwright + Turndown), optional screenshot |
+| `/pb-qa` | Runtime QA — visit routes, capture console errors / 5xx / broken images, per-route screenshots |
 
 ## Verify vs regress (pb-ship)
 
