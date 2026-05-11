@@ -11,6 +11,7 @@ Lichte vervanger voor Garry Tan's gstack — een hand-picked set Claude Code sla
 | `/pb-investigate` | Root-cause debugging — iron law: no fix without investigation |
 | `/pb-cso` | Pre-launch security audit — OWASP top 10 + STRIDE met confidence-gate |
 | `/pb-ship` | Pre-merge orchestrator — pb-review + e2e-from-pr verify-mode + ship/wait/decide gate, nooit auto-merge |
+| `/pb-browse` | URL → markdown via WebFetch, fallback Playwright voor SPA's, optional screenshot |
 
 ## Verify vs regress (pb-ship)
 
