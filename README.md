@@ -13,6 +13,7 @@ Lichte vervanger voor Garry Tan's gstack — een hand-picked set Claude Code sla
 | `/pb-ship` | Pre-merge orchestrator — pb-review + e2e-from-pr verify-mode + ship/wait/decide gate, nooit auto-merge |
 | `/pb-browse` | URL → markdown via headless Chromium (Bun + Playwright + Turndown), optional screenshot |
 | `/pb-qa` | Runtime QA — visit routes, capture console errors / 5xx / broken images, per-route screenshots |
+| `/pb-prune-tests` | Test-suite opruim — detecteert broken imports, all-skipped files, oude PR-references. Rapport-only; deletions na user-approval |
 
 ## Verify vs regress (pb-ship)
 
