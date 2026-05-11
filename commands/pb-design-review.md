@@ -1,7 +1,7 @@
 ---
-description: Pre-landing review of UI changes. Audits the diff for design quality — hierarchy, spacing, typography, color, accessibility, AI slop. Auto-fixes mechanical issues, asks before taste calls.
-allowed-tools: [Bash, Read, Edit, Grep, Glob]
-argument-hint: "[url]  optional dev-server URL for live screenshot pass"
+description: Pre-landing review of UI changes. Audits the diff for design quality — hierarchy, spacing, typography, color, accessibility, AI slop. Auto-fixes mechanical issues, asks before taste calls. Optionally hands off to the art-director skill for subjective critique.
+allowed-tools: [Bash, Read, Edit, Grep, Glob, Skill, AskUserQuestion]
+argument-hint: "[url]  optional dev-server URL for live screenshot pass + art-director hand-off"
 ---
 
 # pb-design-review
@@ -103,15 +103,38 @@ Never auto-fix: anything that changes the visual identity (color palette swap, t
 
 ### 6. Live pass (only if a URL was given)
 
+If `$ARGUMENTS` contains a URL, capture screenshots via the pb-suite browse script:
+
 ```bash
-# arg parsing: $ARGUMENTS contains the URL if provided
+PB_SUITE=$(dirname "$(dirname "$(readlink "$HOME/.claude/commands/pb-design-review.md" 2>/dev/null || echo "$HOME/.claude/commands/pb-design-review.md")")")
+BRANCH=$(git branch --show-current 2>/dev/null || echo "no-branch")
+SAFE_BRANCH=${BRANCH//[^a-z0-9.-]/_}
+OUT=".pb-design-review/$SAFE_BRANCH"
+mkdir -p "$OUT"
+bun "$PB_SUITE/scripts/browse.ts" "$URL" --screenshot "$OUT/$(date +%s).png" --raw > /dev/null
 ```
 
-If the user passed a URL, take screenshots of the changed pages or components. Use Playwright via `browser_navigate` + `browser_take_screenshot`, or fall back to `/browse` if it is the only browsing tool available.
+`browse.ts` captures full-page at 1280×800. For mobile/tablet checks you currently still need a separate tool — the script can be extended later with a `--viewport` flag.
 
-Screenshot at three widths: 375 (mobile), 768 (tablet), 1280 (desktop). Compare against the checklist above. Save screenshots to `.pb-design-review/<branch>/<page>-<width>.png` (gitignored).
+Compare the screenshot against the checklist findings. If a NIT looks worse in the screenshot than the diff suggested, promote it to IMPORTANT.
 
-### 7. Report
+### 7. Art-direction hand-off (optional)
+
+If a live URL was given AND there are no BLOCKERs left AND the change touches a marketing / landing / brand surface (or you can see the visual register clearly), offer the `art-director` skill for a subjective critique.
+
+Use `AskUserQuestion` with two options:
+
+- **critique** — invoke the `art-director` skill on the captured URL with mode "Structured Critique" (5 dimensions: first impression, composition, color, typography, craft). Pass the screenshot path and any relevant brand context from the project's `CLAUDE.md`.
+- **skip** — finish here.
+
+Skip the question entirely when:
+- No live URL was given (nothing visual to critique).
+- The diff is mechanical only (touch-target padding, single-color token replacement) — art-direction adds noise on those.
+- BLOCKERs remain — fix those first, then re-run.
+
+Art-direction and `pb-design-review` are complements, not duplicates: this command checks what is measurable (a11y, hierarchy, token-discipline, slop-patterns). Art-director checks what is felt (does it land, does the hierarchy serve the message, is the craft tight). One pass each, no overlap.
+
+### 8. Report
 
 ```
 Design review: N findings — X BLOCKER, Y IMPORTANT, Z NIT
@@ -122,7 +145,8 @@ Needs your call:
   - <bullet per finding, with file:line and the question>
 NIT:
   - <one line per nit>
-Live pass: <urls screenshotted | skipped — no URL given>
+Live pass:   <screenshot path | skipped — no URL given>
+Art-direction: <invoked | skipped — <reason>>
 ```
 
 Then ask: continue or discuss findings? Do not stage, commit, push, or open a PR.

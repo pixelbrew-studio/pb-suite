@@ -7,7 +7,7 @@ Lichte vervanger voor Garry Tan's gstack — een hand-picked set Claude Code sla
 | Command | Doel |
 |---|---|
 | `/pb-review` | Pre-landing code review — correctness, safety, completeness, tests |
-| `/pb-design-review` | Pre-landing UI review — a11y, hierarchy, spacing, typography, AI-slop |
+| `/pb-design-review` | Pre-landing UI review — a11y, hierarchy, spacing, typography, AI-slop. Optionele hand-off naar `art-director` skill voor subjective critique wanneer een live URL is gegeven |
 | `/pb-investigate` | Root-cause debugging — iron law: no fix without investigation |
 | `/pb-cso` | Pre-launch security audit — OWASP top 10 + STRIDE met confidence-gate |
 | `/pb-ship` | Pre-merge orchestrator — pb-review + e2e-from-pr verify-mode + ship/wait/decide gate, nooit auto-merge |
