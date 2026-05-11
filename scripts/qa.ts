@@ -29,6 +29,7 @@ type Report = {
   baseUrl: string;
   routesChecked: number;
   totals: { blocker: number; important: number; nit: number };
+  findings: Finding[];
   routes: RouteReport[];
 };
 
@@ -101,9 +102,16 @@ async function checkRoute(
 ): Promise<RouteReport> {
   const findings: Finding[] = [];
 
+  // Skip console-errors that are 1:1 duplicates of HTTP-errors we already log via the
+  // response listener — "Failed to load resource: ... 4xx/5xx" is the same event seen
+  // from two angles. Project console.error() calls with custom text still come through.
+  const isResourceLoadError = (text: string): boolean =>
+    /^Failed to load resource:.*\b\d{3}\b/i.test(text);
+
   const consoleHandler = (msg: ConsoleMessage) => {
     const text = msg.text();
     if (msg.type() === "error") {
+      if (isResourceLoadError(text)) return;
       findings.push({
         severity: classifyConsoleError(text),
         category: "console-error",
@@ -244,15 +252,39 @@ async function main(): Promise<void> {
       routeReports.push(report);
     }
 
+    // Aggregate: detect sticky-redirect targets — N distinct paths landing on the same
+    // finalUrl. Three or more is the threshold; two can be legitimate (/home → /).
+    const redirectBuckets = new Map<string, string[]>();
+    for (const r of routeReports) {
+      if (r.path !== new URL(r.finalUrl).pathname + new URL(r.finalUrl).search) {
+        const existing = redirectBuckets.get(r.finalUrl) ?? [];
+        existing.push(r.path);
+        redirectBuckets.set(r.finalUrl, existing);
+      }
+    }
+
+    const aggregateFindings: Finding[] = [];
+    for (const [target, paths] of redirectBuckets.entries()) {
+      if (paths.length >= 3) {
+        aggregateFindings.push({
+          severity: "nit",
+          category: "http-error",
+          detail: `${paths.length} routes redirected to same target: ${target} (from ${paths.join(", ")}) — review middleware / auth redirect logic`,
+        });
+      }
+    }
+
     const totals = { blocker: 0, important: 0, nit: 0 };
     for (const r of routeReports) {
       for (const f of r.findings) totals[f.severity]++;
     }
+    for (const f of aggregateFindings) totals[f.severity]++;
 
     const report: Report = {
       baseUrl: args.baseUrl,
       routesChecked: routeReports.length,
       totals,
+      findings: aggregateFindings,
       routes: routeReports,
     };
     process.stdout.write(JSON.stringify(report, null, 2));
