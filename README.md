@@ -15,6 +15,7 @@ Lichte vervanger voor Garry Tan's gstack — een hand-picked set Claude Code sla
 | `/pb-qa` | Runtime QA — visit routes, capture console errors / 5xx / broken images, per-route screenshots |
 | `/pb-prune-tests` | Test-suite opruim — detecteert broken imports, all-skipped files, oude PR-references. Rapport-only; deletions na user-approval |
 | `/pb-check` | Comprehensive orchestrator — draait pb-review + pb-design-review + pb-cso + pb-qa, aggregaateert findings, geeft "Lessons" sectie met patterns. Geen merge, geen mutaties — alleen audit + leren |
+| `/pb-tdd` | Test-first development discipline voor coding-agents. Greenfield (RED→GREEN→REFACTOR) of brownfield (CHARACTERIZE→RED→GREEN→REFACTOR), auto-detected. Risk-based buckets — strict voor money/privacy/auth/AI/retention/evaluation, light voor standaard CRUD, skip voor docs. Eén vertical slice per call. `--init-policy` voor het zetten van de testing-policy in CLAUDE.md |
 
 ## Verify vs regress (pb-ship)
 
