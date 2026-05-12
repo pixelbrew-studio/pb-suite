@@ -1,7 +1,7 @@
 ---
-description: Test-first development discipline for coding-agent work. Forces tests as contract, not decoration. Greenfield (RED→GREEN→REFACTOR) or brownfield (CHARACTERIZE→RED→GREEN→REFACTOR), auto-detected. Risk-based — strict for money/privacy/auth/AI/retention/evaluation, lighter for UI/copy. Produces one small vertical slice per call.
+description: Test-first development discipline for coding-agent work. Forces tests as contract, not decoration. Greenfield (RED→GREEN→REFACTOR) or brownfield (CHARACTERIZE→RED→GREEN→REFACTOR), auto-detected. Risk-based — strict for money/privacy/auth/AI/retention/evaluation, lighter for UI/copy. Produces one small vertical slice per call. With no description, auto-detects context from working tree + branch + recent commits and proposes slices.
 allowed-tools: [Bash, Read, Edit, Write, Glob, Grep, AskUserQuestion]
-argument-hint: "<description> [--brownfield file:func] [--slice-only] [--no-risk] [--init-policy]"
+argument-hint: "[description] [--brownfield file:func] [--slice-only] [--no-risk] [--init-policy] [--auto]"
 ---
 
 # pb-tdd
@@ -36,15 +36,51 @@ If `--init-policy` is in `$ARGUMENTS`: append the **Testing policy template** (b
 ### 1. Triage
 
 Parse `$ARGUMENTS`:
-- Description (positional, required)
+- Description (positional, optional — if missing or shorter than ~15 chars, run **Auto-context** below)
 - `--brownfield <file:func>` — explicit pin
 - `--slice-only` — planning-mode, no code written
 - `--no-risk` — force light bucket
+- `--auto` — force auto-context even when a description is given
 - `--init-policy` — handled in step 0
 
 Detect mode. For brownfield without explicit pin: grep the repo for the most specific noun in the description (function name, route path, component name). If exactly one match: brownfield with that target. If multiple or zero: greenfield.
 
 Report mode + target.
+
+### 1.5. Auto-context (triggered when description is missing, vague, or `--auto`)
+
+Scan the local state for clues about what the user is working on. Then propose slices.
+
+```bash
+# Working tree
+git status --short                                                                              # what files changed?
+git diff HEAD --stat                                                                            # how much, where?
+git diff HEAD 2>/dev/null | head -200                                                           # the actual change
+git log --oneline -8                                                                            # recent intent
+git branch --show-current                                                                       # branch name hint
+git diff --name-only HEAD 2>/dev/null | xargs -I {} grep -l "TODO\|FIXME" {} 2>/dev/null | head # explicit todos
+```
+
+Extract signals:
+
+- **Branch name** — `pix-33-upload-retention` strongly hints at upload + retention work.
+- **Modified files** — group by directory. `src/lib/upload/*` modified suggests upload pipeline. New files in `src/app/api/` suggest a new route.
+- **Diff hunks** — read 50-200 lines of the actual diff. Find new functions/methods/routes that have no corresponding test file. Find half-completed code (a function with a TODO mid-body, a route with empty handler, an `as any`).
+- **Recent commits** — what theme has the user been on? Two of the last five commits about uploads = upload feature in flight.
+- **TODO/FIXME** — anything explicit that flags what the user knows they still owe.
+
+Propose 2-4 candidate slices. Each in Given/When/Then format, with risk-bucket pre-classified. Order by what looks most "in-flight" (largest diff, most TODOs, most recent commit message theme).
+
+Use `AskUserQuestion` to present them. Options:
+
+- **slice-N** — pick one of the proposed slices to implement now
+- **describe-mine** — user provides their own description instead
+- **slice-only** — show all slices, write nothing (planning mode)
+- **cancel** — exit without action
+
+Once a slice is chosen, continue with the rest of the steps using that as the description.
+
+If auto-context finds nothing meaningful (clean working tree, no recent activity, generic branch name): tell the user there's no context to infer from, and ask them to provide a description.
 
 ### 2. Risk classify
 
