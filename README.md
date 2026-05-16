@@ -16,6 +16,11 @@ Lichte vervanger voor Garry Tan's gstack — een hand-picked set Claude Code sla
 | `/pb-prune-tests` | Test-suite opruim — detecteert broken imports, all-skipped files, oude PR-references. Rapport-only; deletions na user-approval |
 | `/pb-check` | Comprehensive orchestrator — draait pb-review + pb-design-review + pb-cso + pb-qa, aggregaateert findings, geeft "Lessons" sectie met patterns. Geen merge, geen mutaties — alleen audit + leren |
 | `/pb-tdd` | Test-first development discipline voor coding-agents. Greenfield (RED→GREEN→REFACTOR) of brownfield (CHARACTERIZE→RED→GREEN→REFACTOR), auto-detected. Risk-based buckets — strict voor money/privacy/auth/AI/retention/evaluation, light voor standaard CRUD, skip voor docs. Eén vertical slice per call. `--init-policy` voor het zetten van de testing-policy in CLAUDE.md |
+| `/pb-copy` | Copywriting review en rewrite. Strip AI-slop ("leverage", "dive into", "In today's fast-paced..."), brand-tone uit CLAUDE.md (emoji/exclamation/superlative-bans), één framework per surface (AIDA/PAS/FAB/BAB). Mode-aware voor marketing vs product. Modes: rewrite / critique / generate / brand-check |
+| `/pb-audit` | Adversarial audit van bestaande, stabiele code zonder diff. Behavior-inventory + coverage-map + testability + OWASP + GDPR + defect-register met critical/high/medium/low severity en effort-estimates. Read-only. MODE A audit / B + characterization plan / C inventory-backfill |
+| `/pb-resume` | "Where was I?" voor één repo — git state, recent activity, open PRs, CI status, en een gesuggereerde volgende stap. Solo-founder context-recovery na een onderbreking |
+| `/pb-across` | Run een shell- of pb-command over elk project in `Projects/Active/`. Walk-one-level-deep voor nested repos zoals `Salmon Rushhour/repo`. Filter / parallel / summary modes |
+| `/pb-env-check` | Diff `.env.example` vs lokale env vs Vercel env (per environment). Vlagt missing, undocumented, prod-only en leaked. Keys-only, nooit values |
 
 ## Verify vs regress (pb-ship)
 

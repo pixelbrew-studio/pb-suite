@@ -16,18 +16,48 @@ The point of running them together is the **Lessons** section at the end: patter
 
 ### 1. Scope detection
 
-Determine what is in the diff:
+Refuse destructive flags first — pb-check is read-only and every spawned pass must stay read-only regardless of what got passed in:
 
 ```bash
-PB_CMD="$HOME/.claude/commands/pb-check.md"
-PB_SUITE=$(dirname "$(dirname "$(readlink "$PB_CMD" 2>/dev/null || echo "$PB_CMD")")")
-source "$PB_SUITE/scripts/lib/scope.sh"
-git diff --name-only "$BASE"...HEAD > /tmp/pb-check-files.txt
-UI=$(grep -E '\.(tsx?|jsx?|vue|svelte|astro|css|scss|html)$|tailwind\.config|globals\.css' /tmp/pb-check-files.txt | wc -l | tr -d ' ')
-echo "Files changed: $(wc -l < /tmp/pb-check-files.txt | tr -d ' ') (UI: $UI)"
+case " $ARGUMENTS " in
+  *" --fix "*|*" --write "*|*" --update-snapshots "*|*" --update "*|*" -u "*)
+    echo "pb-check: refuse — destructive flag detected. pb-check is read-only."; exit 1;;
+esac
 ```
 
-Extract URL from `$ARGUMENTS` if present. URL triggers the runtime passes.
+Resolve the suite location. Prefer `PB_SUITE_HOME` if set; fall back to readlink for the symlink install:
+
+```bash
+if [ -n "$PB_SUITE_HOME" ] && [ -d "$PB_SUITE_HOME" ]; then
+  PB_SUITE="$PB_SUITE_HOME"
+else
+  PB_CMD="$HOME/.claude/commands/pb-check.md"
+  PB_SUITE=$(dirname "$(dirname "$(readlink "$PB_CMD" 2>/dev/null || echo "$PB_CMD")")")
+fi
+source "$PB_SUITE/scripts/lib/scope.sh"
+```
+
+Build the file list. Include committed-vs-base **and** working-tree changes (staged, unstaged, untracked) — otherwise a branch with zero commits beyond BASE silently audits an empty diff:
+
+```bash
+{ git diff --name-only "$BASE"...HEAD; \
+  git diff --name-only HEAD; \
+  git ls-files --others --exclude-standard; } \
+  | sort -u > /tmp/pb-check-files.txt
+
+COMMITTED=$(git rev-list --count "$BASE"...HEAD 2>/dev/null || echo 0)
+TOTAL=$(wc -l < /tmp/pb-check-files.txt | tr -d ' ')
+UI=$(grep -E '\.(tsx?|jsx?|vue|svelte|astro|css|scss|html)$|tailwind\.config|globals\.css' /tmp/pb-check-files.txt | wc -l | tr -d ' ')
+
+if [ "$COMMITTED" -eq 0 ] && [ "$TOTAL" -gt 0 ]; then
+  echo "Note: 0 commits beyond $BASE — reviewing uncommitted working tree only."
+fi
+echo "Files changed: $TOTAL (UI: $UI, committed: $COMMITTED)"
+```
+
+If `$TOTAL` is 0: stop. There is nothing to check.
+
+Extract URL from `$ARGUMENTS` if present (strip any flags first). URL triggers the runtime passes.
 
 ### 2. Run pb-review (always)
 
@@ -105,11 +135,32 @@ Next:
   - Consider /pb-investigate on: <recurring-theme topic, if any>
 ```
 
-### 9. Persistence (optional)
+### 9. Persistence
 
-Offer to append the **Lessons** section to a `LESSONS.md` at the repo root (or to the project's existing notes file if `CLAUDE.md` references one). Use `AskUserQuestion`:
+Lessons are where the value compounds, so they save by default when there is a signal the user maintains written context for this repo.
 
-- **save** — append lessons with date + branch
-- **skip** — print only
+```bash
+LESSONS_TARGET=""
+[ -f CLAUDE.md ] && LESSONS_TARGET=".claude/lessons.md"
+LESSONS_LINES=0
+[ -f "$LESSONS_TARGET" ] && LESSONS_LINES=$(wc -l < "$LESSONS_TARGET" | tr -d ' ')
+```
+
+Behavior:
+
+- **`CLAUDE.md` exists, lessons file under 500 lines** — auto-append to `.claude/lessons.md` (create the dir if missing). Print path of the appended file in the final report.
+- **`CLAUDE.md` exists, lessons file ≥ 500 lines** — ask via `AskUserQuestion` whether to append, archive-and-restart (`mv .claude/lessons.md .claude/lessons-$(date +%Y%m).md`), or skip. The threshold prevents a single file growing into a megabyte of stale patterns.
+- **No `CLAUDE.md`** — ask via `AskUserQuestion`: save to `LESSONS.md` at repo root, save to a path the user specifies, or skip.
+
+Append format:
+
+```
+## <YYYY-MM-DD> — <branch>
+<lessons content>
+
+---
+```
+
+The `---` separator makes per-run blocks visually scannable when the file grows. Date and branch make it greppable.
 
 Over time, this file becomes a per-project pattern log — the structural drift you would otherwise forget between PRs.
