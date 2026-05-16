@@ -31,17 +31,50 @@ If no input: stop and ask for copy or file path.
 
 ### 2. Read project brand-tone
 
-Read the project's `CLAUDE.md` (plus `DESIGN.md` / `VOICE.md` / `BRAND.md` if they exist). Extract:
+Collect brand-tone signals from multiple possible locations. Read whichever exist:
 
-- **Language** — NL / EN / mixed
+**Top-level files** (read first, these usually have the headline rules):
+
+```bash
+for f in CLAUDE.md AGENTS.md BRAND.md VOICE.md DESIGN.md; do
+  [ -f "$f" ] && echo "found: $f"
+done
+```
+
+**Monorepo content-style packages** (e.g. Acme's `@acme/content-style`). Look for packages whose name or path hints at voice/tone/brand/copy:
+
+```bash
+find packages -maxdepth 3 -type d \( -name "*content-style*" -o -name "*voice*" -o -name "*tone*" -o -name "*brand*" -o -name "*copy*" -o -name "*content*" \) 2>/dev/null | head -5
+```
+
+For each match, read its `CLAUDE.md` / `README.md` and any `src/*.ts` exporting typed constants (e.g. `PREFERRED_WORDS`, `AVOIDED_WORDS`, `TONE`, `BRAND_PROMISE`, `PRODUCT_NAMING`). Those are usually the most precise, machine-readable definitions.
+
+**App-specific overrides** (when running inside a monorepo app rather than the root):
+
+```bash
+# When CWD is inside apps/<name>/, read that app's CLAUDE.md too
+test -f apps/$(basename "$PWD")/CLAUDE.md && cat apps/$(basename "$PWD")/CLAUDE.md
+```
+
+App-level rules override platform-level rules where they conflict.
+
+**Extract from each source**:
+
+- **Language** — NL / EN / mixed (which surfaces use which)
 - **Emoji policy** — allowed or forbidden
 - **Exclamation marks** — allowed or forbidden
-- **Superlative ban list** — e.g. "revolutionary", "amazing", "world-class"
+- **Superlative ban list** — explicit or inferred ("no superlatives" → use pb-copy's default list)
+- **Preferred/avoided words** — when a content-style package or `## Words` section lists them, use those verbatim as overrides for the generic AI-tropes appendix
 - **Two-register split** — e.g. Sendays' "editorial marketing vs instrument product"
-- **Required vocabulary** — brand words to use (e.g. "decision engine") or avoid (e.g. "AI-powered" if generic)
+- **Required vocabulary** — brand words to use (e.g. "decision engine", "evidence", "shortlist") or avoid (e.g. "AI-powered" when too generic)
+- **Product-naming rules** — first-mention vs second-mention, sub-brand bans, deprecated names (e.g. Acme's "LegacyProduct" → "Acme Shortlist")
+- **Compliance posture** — audit-caution flags (e.g. "no wordplay around fraud/pretending"), regulator-tone constraints
+- **AI-positioning** — function-name preferred over marketing-claim ("AI-assisted screening" beats "Powered by AI")
 - **Length budgets** — if documented for specific surfaces
 
-If the project has no brand-tone documented: use pb-suite defaults — no emoji, no exclamation marks, no superlatives, no AI-tropes, neutral and concrete.
+Aggregate sources into a single effective rule set. Cite the source path for each rule in the report so the user can trace why a finding fired.
+
+If no brand-tone is documented anywhere: use pb-suite defaults — no emoji, no exclamation marks, no superlatives, no AI-tropes, neutral and concrete.
 
 ### 3. Detect surface register
 
