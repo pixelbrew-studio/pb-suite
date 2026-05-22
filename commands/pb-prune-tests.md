@@ -21,11 +21,8 @@ Report-only by default. Deletions require explicit user approval per file or per
 ### 1. Resolve the script
 
 ```bash
-PB_CMD="$HOME/.claude/commands/pb-prune-tests.md"
-PB_TARGET=$(readlink "$PB_CMD" 2>/dev/null || echo "$PB_CMD")
-PB_SUITE=$(dirname "$(dirname "$PB_TARGET")")
+source "$HOME/.claude/commands/pb-bootstrap.sh"
 PB_SCRIPT="$PB_SUITE/scripts/prune-tests.ts"
-
 [ -f "$PB_SCRIPT" ] || { echo "pb-prune-tests: script not found, run $PB_SUITE/install"; exit 1; }
 ```
 

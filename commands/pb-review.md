@@ -16,8 +16,7 @@ Focus on what breaks in production: correctness, safety, completeness. Style nit
 Use the shared scope-detection helper. For a feature branch it diffs against the integration branch (`origin/main` or equivalent), not the branch's own remote — `@{u}` on a feature branch resolves to `origin/<feature>` and produces an empty diff. Only on `main`/`master` does it fall back to upstream (reviewing unpushed commits).
 
 ```bash
-PB_CMD="$HOME/.claude/commands/pb-review.md"
-PB_SUITE=$(dirname "$(dirname "$(readlink "$PB_CMD" 2>/dev/null || echo "$PB_CMD")")")
+source "$HOME/.claude/commands/pb-bootstrap.sh"
 source "$PB_SUITE/scripts/lib/scope.sh"
 git status -s
 git diff --stat "$BASE"...HEAD
@@ -53,12 +52,11 @@ Run in order. Stop early if a finding warrants discussion before continuing.
 - Swallowed errors, error returned but never checked
 - Type lies — `as any`, unchecked casts, `@ts-ignore` without a reason in the comment
 
-**Safety**
+**Safety** (diff-level quick wins — for deep audit run `/pb-cso --diff`)
 - SQL built by string concatenation instead of parameterized
 - Untrusted input flowing into `eval`, `exec`, `dangerouslySetInnerHTML`, shell commands
-- Secrets in code, logs, error messages, or commit history
-- Missing auth check on a route that handles user data
-- Permissive CORS, missing CSRF where applicable, weakened CSP
+- Secrets in code, logs, or error messages introduced by this diff
+- Missing auth check on a new route that handles user data
 
 **Completeness**
 - New function, route, or branch with no test covering it

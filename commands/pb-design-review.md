@@ -21,8 +21,7 @@ The `ux-design` skill remains the canonical reference for the underlying Refacto
 Same scope-detection as `pb-review`: against `origin/main` for feature branches, against upstream when on main itself.
 
 ```bash
-PB_CMD="$HOME/.claude/commands/pb-design-review.md"
-PB_SUITE=$(dirname "$(dirname "$(readlink "$PB_CMD" 2>/dev/null || echo "$PB_CMD")")")
+source "$HOME/.claude/commands/pb-bootstrap.sh"
 source "$PB_SUITE/scripts/lib/scope.sh"
 git diff --name-only "$BASE"...HEAD | grep -E '\.(tsx?|jsx?|vue|svelte|astro|css|scss|sass|module\.css|html)$|tailwind\.config|globals\.css|tokens\.(ts|json|css)' || true
 ```
@@ -130,7 +129,7 @@ Never auto-fix: anything changing the visual identity (palette swap, type-scale 
 If `$ARGUMENTS` contains a URL, capture a screenshot via the pb-suite browse script:
 
 ```bash
-PB_SUITE=$(dirname "$(dirname "$(readlink "$HOME/.claude/commands/pb-design-review.md" 2>/dev/null || echo "$HOME/.claude/commands/pb-design-review.md")")")
+source "$HOME/.claude/commands/pb-bootstrap.sh"
 BRANCH=$(git branch --show-current 2>/dev/null || echo "no-branch")
 SAFE_BRANCH=${BRANCH//[^a-z0-9.-]/_}
 OUT=".pb-design-review/$SAFE_BRANCH"

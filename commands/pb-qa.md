@@ -21,11 +21,8 @@ If the URL is unreachable, surface that and stop. Do not pretend to QA an offlin
 ### 2. Resolve the script
 
 ```bash
-PB_CMD="$HOME/.claude/commands/pb-qa.md"
-PB_TARGET=$(readlink "$PB_CMD" 2>/dev/null || echo "$PB_CMD")
-PB_SUITE=$(dirname "$(dirname "$PB_TARGET")")
+source "$HOME/.claude/commands/pb-bootstrap.sh"
 PB_SCRIPT="$PB_SUITE/scripts/qa.ts"
-
 [ -f "$PB_SCRIPT" ] || { echo "pb-qa: script not found, run $PB_SUITE/install"; exit 1; }
 ```
 
