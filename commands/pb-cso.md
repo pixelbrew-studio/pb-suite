@@ -31,8 +31,7 @@ Default: full-repo audit. With `--diff`, scope to the diff:
 
 ```bash
 if [ "$ARGUMENTS" = "--diff" ]; then
-  PB_CMD="$HOME/.claude/commands/pb-cso.md"
-  PB_SUITE=$(dirname "$(dirname "$(readlink "$PB_CMD" 2>/dev/null || echo "$PB_CMD")")")
+  source "$HOME/.claude/commands/pb-bootstrap.sh"
   source "$PB_SUITE/scripts/lib/scope.sh"
   echo "SCOPE: diff vs $BASE"
 else

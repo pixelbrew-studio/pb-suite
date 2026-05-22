@@ -57,15 +57,11 @@ For each entry point: are seams testable? Are external dependencies mockable or 
 
 ### 4. Safety review
 
-Walk OWASP 2025 Top 10 against SCOPE — tailor to the detected stack, skip categories that don't apply. Use the same checklist and confidence-gate as `pb-cso` step 6 (every BLOCKER-equivalent needs a concrete two-sentence exploit scenario).
+Run the OWASP+STRIDE checklist from `pb-cso` (steps 6 and 7) against SCOPE — same confidence-gate, every critical-equivalent needs a concrete two-sentence exploit scenario.
 
-For **every** applicable category, also answer:
+Per applicable category, also answer: *if this attack were tried today against the deployed version, would existing logs show it?* If no, the missing observability is its own defect — log it in the register under `observability`.
 
-> If this attack were tried today against the deployed version, would existing logs show it?
-
-If no, the missing observability is its own defect — log it in the register under `observability`.
-
-Plus GDPR pass when PII is in scope: lawful basis recorded, retention boundary, data-subject-access path, leaks via logs or error messages, third-party sub-processor flow.
+GDPR pass when PII is in SCOPE: lawful basis recorded, retention boundary, data-subject-access path, leaks via logs or error messages, third-party sub-processor flow.
 
 ### 5. Defect register
 

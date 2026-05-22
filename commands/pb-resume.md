@@ -78,13 +78,14 @@ CI on $BRANCH
 
 Apply rules in order. Output the first that matches:
 
-- Uncommitted work + last commit fresh (<2h) → "Finish committing what you started."
-- Uncommitted work + last commit stale → "Decide whether to commit or stash the working changes."
-- Open PR with CI red → "Fix CI on PR #N first."
-- Open PR with CI green + no reviews → "Merge PR #N or request review."
+- Uncommitted work + last commit fresh (<2h) → "Finish committing what you started, then `/pb-review`."
+- Uncommitted work + last commit stale → "Decide whether to commit or stash. If unsure what's in flight: `/pb-tdd --auto` proposes slices from the working tree."
+- Open PR with CI red → "Fix CI on PR #N first — `/pb-investigate` if the failure isn't obvious."
+- Open PR with CI green + no reviews → "Run `/pb-check` for a final read, then merge PR #N via `/pb-ship`."
 - Branch ahead of upstream (unpushed) → "Push your N unpushed commits."
+- Recent activity is mostly marketing/copy files → "Try `/pb-copy --mode brand-check` before the next push."
 - Clean tree + open PRs all merged/green + no activity in $DAYS days → "Project is idle. Run `/cil-pulse` to surface what's stale."
-- Otherwise → "Start the next planned slice."
+- Otherwise → "Start the next planned slice — `/pb-tdd <description>`."
 
 One sentence. The suggestion is a nudge, not a plan.
 

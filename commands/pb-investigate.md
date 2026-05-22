@@ -106,3 +106,15 @@ Open questions: <anything you're not sure about, or skip if none>
 ```
 
 If this investigation revealed a recurring pattern in the same area, name it. Recurring bugs are architectural smells, not bad luck — surface for the user to decide whether a structural fix is in scope. If a CIL decision exists that this bug invalidates, mention which one.
+
+### 10. Persistence (optional)
+
+If the project already maintains `.claude/incidents.md` (treat its existence as the opt-in signal — never create it unsolicited), append a single-line entry summarising this investigation:
+
+```
+YYYY-MM-DD <branch>  <area> — <root cause in one phrase>
+```
+
+One line per investigation, no headers, no commentary. The file becomes a grep-able bug-shape log across PRs — the same pattern `pb-check` uses for `.claude/lessons.md`.
+
+If `.claude/incidents.md` does not exist: do nothing. Do not prompt to create it.
