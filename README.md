@@ -24,6 +24,7 @@ Lichte vervanger voor Garry Tan's gstack — een hand-picked set Claude Code sla
 | `/pb-evolve` | Leest `.claude/lessons.md` (van pb-check) en `.claude/incidents.md` (van pb-investigate), clustert recurrent patronen over PR's heen, en stelt surgical edits voor aan pb-* skills. Nooit auto-apply — per kandidaat `AskUserQuestion`. `--global` voor cross-repo signal, `--apply` om door te voeren. De enige pb-skill die de suite zelf aanpast |
 | `/pb-init` | Opt een project in voor pb-suite — voegt gitignore-entries toe voor `.pb-qa/` / `.pb-design-review/` / `.pb-browse/`, biedt aan om `.claude/lessons.md` en `.claude/incidents.md` te creëren, scaffold `CLAUDE.md` skeleton als die ontbreekt. Per-item AskUserQuestion. Idempotent — re-run is veilig |
 | `/pb-pr` | Draft een PR description vanuit de branch-diff. Leest `CLAUDE.md` voor brand-tone, infereert intent (fix/feature/refactor/chore/mixed), vult `.github/pull_request_template.md` als die bestaat, anders een suite-default. Toont draft → user kiest open / draft / revise / copy / cancel. Mergen blijft `/pb-ship` |
+| `/pb-rules` | Injecteert de canonical pb-suite Workflow block (trigger-tabel, risk buckets, severity model) in een `CLAUDE.md`. Per-repo default, `--global` schrijft naar `~/.claude/CLAUDE.md`. Idempotent — diff tegen bestaande block, vraagt voor overschrijven. Single source of truth: re-run na suite-updates om changes op te pikken |
 
 ## Verify vs regress (pb-ship)
 

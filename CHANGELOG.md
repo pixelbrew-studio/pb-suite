@@ -2,6 +2,11 @@
 
 Notable changes to pb-suite. Follows semver, written newest-first.
 
+## 0.3.1
+
+- Add `/pb-rules` — inject the canonical pb-suite Workflow block (trigger table mapping change-types to commands, risk buckets, severity model, default test stack) into a `CLAUDE.md` file. Per-repo by default; `--global` writes to `~/.claude/CLAUDE.md`. Idempotent: diffs against existing block, asks before overwriting. Single source of truth — re-run after suite updates to pick up changes.
+- `/pb-init` step 5 scaffold no longer hardcodes pb-suite conventions; instead leaves a comment pointing to `/pb-rules` and the final report tells the user to run it next. Avoids drift between two skills owning the same content.
+
 ## 0.3.0
 
 - Add `/pb-init` — opt a project into pb-suite. Detects what is missing (gitignore entries for `.pb-qa/` / `.pb-design-review/` / `.pb-browse/`, `.claude/lessons.md`, `.claude/incidents.md`, `CLAUDE.md`) and offers each via `AskUserQuestion`. Idempotent — safe to re-run. `--minimal` skips the `CLAUDE.md` scaffold offer.

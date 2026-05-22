@@ -131,11 +131,9 @@ visual / marketing heuristics. List paths or globs:
 - <e.g. src/lib/billing/**>
 - <e.g. src/lib/auth/middleware.ts>
 
-## pb-suite conventions used
-
-- `/pb-check` writes to `.claude/lessons.md`
-- `/pb-investigate` appends to `.claude/incidents.md`
-- `/pb-evolve` reads both for cross-repo signal
+<!-- Run /pb-rules to inject the pb-suite Workflow block (trigger table, risk
+     buckets, severity model). pb-rules is the canonical source — re-run it to
+     pick up suite updates. -->
 ```
 
 Do not pre-fill the placeholders. The user fills them in after pb-init exits.
@@ -154,7 +152,7 @@ pb-init: <repo>
   Skipped (user declined):
     - <list>
 
-Next: fill in CLAUDE.md placeholders, then run /pb-check on your next PR.
+Next: fill in CLAUDE.md placeholders, run `/pb-rules` to inject the pb-suite Workflow block, then `/pb-check` on your next PR.
 ```
 
 End with one sentence — what the user should do next. Do not commit; the user reviews `git status` and commits with their own message.
