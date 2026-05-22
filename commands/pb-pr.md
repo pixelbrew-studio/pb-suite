@@ -1,7 +1,7 @@
 ---
 description: Draft a PR description from the current branch diff. Reads CLAUDE.md for brand-tone (no emoji, concise, why-not-what), infers intent from diff + commits, fills the project's PR template if present. Drafts → user reviews → optional gh pr create.
-allowed-tools: [Bash, Read, AskUserQuestion]
-argument-hint: "[--draft]  open PR as draft  | [--no-open]  draft only, do not call gh"
+allowed-tools: [Bash, Read, Write, AskUserQuestion]
+argument-hint: "[--draft] open as draft | [--no-open] draft only, no gh | [--prepare] write to .context/pr-draft.md + clipboard (for Conductor's Create PR button)"
 ---
 
 # pb-pr
@@ -9,6 +9,11 @@ argument-hint: "[--draft]  open PR as draft  | [--no-open]  draft only, do not c
 Draft a PR description for the current branch. Reads `CLAUDE.md` for brand-tone rules, scans the diff + commit messages for intent, fills the project's `.github/pull_request_template.md` if it exists, and shows the draft before opening anything.
 
 The merge itself is `/pb-ship`. This command only handles the description.
+
+## Modes
+
+- **default** — draft, confirm, call `gh pr create`.
+- **`--prepare`** — draft, write to `.context/pr-draft.md`, copy to clipboard via `pbcopy` if available, then stop. Use when opening the PR through Conductor's "Create PR" button or any non-`gh` flow. Works even with zero commits on the branch (reads the worktree diff against base).
 
 ## Steps
 
@@ -20,6 +25,9 @@ source "$PB_SUITE/scripts/lib/scope.sh"
 
 BRANCH=$(git branch --show-current)
 case "$BRANCH" in main|master) echo "pb-pr: on $BRANCH, switch to a feature branch first"; exit 1;; esac
+
+MODE="open"
+case " $ARGUMENTS " in *" --prepare "*) MODE="prepare";; esac
 
 EXISTING=$(gh pr view --json number,url 2>/dev/null)
 if [ -n "$EXISTING" ]; then
@@ -50,6 +58,8 @@ git diff "$BASE"...HEAD                                           # the actual d
 Read in this order — commits first (they state intent), stat second (scope), full diff third (what actually changed).
 
 If commits are mostly auto-checkpoints or WIP messages without substance: rely on the diff. If the diff is small (<50 lines), read it fully. If large, focus on new functions, route handlers, type definitions, and any file with >20 lines changed.
+
+**`--prepare` only**: if `$BASE..HEAD` is empty (no commits yet), fall back to the worktree diff against base — `git diff "$BASE" -- .` and `git status --short`. Conductor's Create PR button commits + pushes for you, so the worktree is the source of truth here. In `open` mode this fallback does not apply: `gh pr create` requires committed + pushed work.
 
 ### 3. Read brand-tone and PR template
 
@@ -117,13 +127,21 @@ If a project template exists, fill its sections and skip any that do not apply (
 
 Print the draft in a fenced block, exactly as it would be sent. Then `AskUserQuestion`:
 
+**`open` mode** (default):
+
 - **open** — call `gh pr create` with this draft
 - **draft** — same as open, but with `--draft`
 - **revise** — accept free-form feedback, regenerate
 - **copy** — print the draft and exit (user opens the PR manually)
 - **cancel** — exit, nothing happens
 
-### 7. Open (only on `open` or `draft`)
+**`--prepare` mode**:
+
+- **accept** — write to `.context/pr-draft.md`, copy to clipboard, print paste instructions
+- **revise** — accept free-form feedback, regenerate
+- **cancel** — exit, nothing happens
+
+### 7a. Open (default mode, on `open` or `draft`)
 
 ```bash
 gh pr create \
@@ -136,7 +154,30 @@ Pass the title and body via heredoc to preserve formatting. Do not pass `--no-ve
 
 If `gh` is not authenticated or the repo has no GitHub remote, surface the error and print the draft so the user can paste it manually.
 
+### 7b. Prepare (`--prepare` mode, on `accept`)
+
+```bash
+mkdir -p .context
+{
+  echo "$TITLE"
+  echo
+  echo "$BODY"
+} > .context/pr-draft.md
+
+if command -v pbcopy >/dev/null 2>&1; then
+  pbcopy < .context/pr-draft.md && CLIP="copied to clipboard"
+else
+  CLIP="clipboard unavailable (no pbcopy)"
+fi
+```
+
+Do not call `gh`. Do not commit. Do not stage anything. The Conductor button owns commit + push + PR creation; this command only supplies the text.
+
+If `.context/` is not already gitignored, mention it once in the report — the file is a working artifact, not source.
+
 ### 8. Report
+
+**`open` mode**:
 
 ```
 pb-pr: <opened | draft | copied | cancelled>
@@ -147,6 +188,19 @@ pb-pr: <opened | draft | copied | cancelled>
   PR URL:   <url or "not opened">
 
 Next: /pb-review (if not done), then /pb-ship.
+```
+
+**`--prepare` mode**:
+
+```
+pb-pr: prepared
+  Branch:   <branch>
+  Base:     <base ref>
+  Intent:   <fix | feature | refactor | chore | mixed>
+  Title:    <title>
+  Draft:    .context/pr-draft.md (<clip status>)
+
+Next: open Conductor's Create PR dialog and paste. Title is the first line; everything after the blank line is the body.
 ```
 
 End with one sentence on what to do next.
