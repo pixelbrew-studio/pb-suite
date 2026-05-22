@@ -21,6 +21,15 @@ The flags combine: `--regress --dry` persists everything and skips the prompt.
 
 ### 1. Preflight
 
+Refuse hook-skipping or signing-bypass flags up front — pb-ship is a deliberate gate, never bypass it:
+
+```bash
+case " $ARGUMENTS " in
+  *" --no-verify "*|*" --no-gpg-sign "*|*" --force "*|*" -f "*)
+    echo "pb-ship: refuse — bypass flag detected. The merge gate is non-negotiable."; exit 1;;
+esac
+```
+
 Smart-classify and revert-cleanup both rely on knowing that every post-run change came from `e2e-from-pr`. Require a clean working tree unless `--regress` is in `$ARGUMENTS` (only `--regress` skips classification entirely, so it can tolerate a dirty tree):
 
 ```bash

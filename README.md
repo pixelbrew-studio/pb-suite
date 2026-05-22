@@ -21,6 +21,10 @@ Lichte vervanger voor Garry Tan's gstack — een hand-picked set Claude Code sla
 | `/pb-resume` | "Where was I?" voor één repo — git state, recent activity, open PRs, CI status, en een gesuggereerde volgende stap. Solo-founder context-recovery na een onderbreking |
 | `/pb-across` | Run een shell- of pb-command over elk project in `Projects/Active/`. Walk-one-level-deep voor nested repos zoals `Salmon Rushhour/repo`. Filter / parallel / summary modes |
 | `/pb-env-check` | Diff `.env.example` vs lokale env vs Vercel env (per environment). Vlagt missing, undocumented, prod-only en leaked. Keys-only, nooit values |
+| `/pb-evolve` | Leest `.claude/lessons.md` (van pb-check) en `.claude/incidents.md` (van pb-investigate), clustert recurrent patronen over PR's heen, en stelt surgical edits voor aan pb-* skills. Nooit auto-apply — per kandidaat `AskUserQuestion`. `--global` voor cross-repo signal, `--apply` om door te voeren. De enige pb-skill die de suite zelf aanpast |
+| `/pb-init` | Opt een project in voor pb-suite — voegt gitignore-entries toe voor `.pb-qa/` / `.pb-design-review/` / `.pb-browse/`, biedt aan om `.claude/lessons.md` en `.claude/incidents.md` te creëren, scaffold `CLAUDE.md` skeleton als die ontbreekt. Per-item AskUserQuestion. Idempotent — re-run is veilig |
+| `/pb-pr` | Draft een PR description vanuit de branch-diff. Leest `CLAUDE.md` voor brand-tone, infereert intent (fix/feature/refactor/chore/mixed), vult `.github/pull_request_template.md` als die bestaat, anders een suite-default. Toont draft → user kiest open / draft / revise / copy / cancel. Mergen blijft `/pb-ship` |
+| `/pb-rules` | Injecteert de canonical pb-suite Workflow block (trigger-tabel, risk buckets, severity model) in een `CLAUDE.md`. Per-repo default, `--global` schrijft naar `~/.claude/CLAUDE.md`. Idempotent — diff tegen bestaande block, vraagt voor overschrijven. Single source of truth: re-run na suite-updates om changes op te pikken |
 
 ## Verify vs regress (pb-ship)
 
@@ -88,4 +92,6 @@ Als je een nieuwe pb-command toevoegt, leg 'm in `commands/pb-<naam>.md` en run 
 
 ## Niet in scope
 
-Geen multi-agent dispatch, geen learning-files, geen "specialist personas", geen pre-flight bash met config-state. Als de suite zwaardere browser-automation nodig heeft (anti-bot, headed mode, long-lived daemon), wordt dat een bewuste uitbreiding in `scripts/`, niet een meta-laag bovenop een externe tool.
+Geen multi-agent dispatch, geen telemetrie, geen "specialist personas", geen pre-flight bash met config-state. Als de suite zwaardere browser-automation nodig heeft (anti-bot, headed mode, long-lived daemon), wordt dat een bewuste uitbreiding in `scripts/`, niet een meta-laag bovenop een externe tool.
+
+**Note over learning-files**: pb-check schrijft optioneel naar `.claude/lessons.md`, pb-investigate optioneel naar `.claude/incidents.md`, en pb-evolve leest beide. Dat is per-project opt-in (de files moeten al bestaan of door pb-check aangemaakt zijn), gitignored-by-convention, en wordt niet naar de pb-suite gestuurd. Geen centrale telemetrie — de signal blijft lokaal bij het project dat hem produceert.

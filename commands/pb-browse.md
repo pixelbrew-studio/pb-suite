@@ -17,9 +17,7 @@ For multi-step flows (login, form fills, CAPTCHA handoff): write a Playwright sp
 Resolve through the symlink so it works regardless of where pb-suite lives:
 
 ```bash
-PB_CMD="$HOME/.claude/commands/pb-browse.md"
-PB_TARGET=$(readlink "$PB_CMD" 2>/dev/null || echo "$PB_CMD")
-PB_SUITE=$(dirname "$(dirname "$PB_TARGET")")
+source "$HOME/.claude/commands/pb-bootstrap.sh"
 PB_SCRIPT="$PB_SUITE/scripts/browse.ts"
 
 if [ ! -f "$PB_SCRIPT" ]; then

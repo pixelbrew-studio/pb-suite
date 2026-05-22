@@ -25,15 +25,10 @@ case " $ARGUMENTS " in
 esac
 ```
 
-Resolve the suite location. Prefer `PB_SUITE_HOME` if set; fall back to readlink for the symlink install:
+Resolve the suite location and base ref (bootstrap honors `PB_SUITE_HOME` override):
 
 ```bash
-if [ -n "$PB_SUITE_HOME" ] && [ -d "$PB_SUITE_HOME" ]; then
-  PB_SUITE="$PB_SUITE_HOME"
-else
-  PB_CMD="$HOME/.claude/commands/pb-check.md"
-  PB_SUITE=$(dirname "$(dirname "$(readlink "$PB_CMD" 2>/dev/null || echo "$PB_CMD")")")
-fi
+source "$HOME/.claude/commands/pb-bootstrap.sh"
 source "$PB_SUITE/scripts/lib/scope.sh"
 ```
 
