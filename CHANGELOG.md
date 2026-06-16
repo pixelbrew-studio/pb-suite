@@ -2,6 +2,18 @@
 
 Notable changes to pb-suite. Follows semver, written newest-first.
 
+## 0.4.0
+
+- Add `scripts/lib/cil.sh` — opt-in CIL integration helpers, no-op outside a CIL repo (detected via top-level `CIL/sources.md`). Provides `cil_repo_p`, `cil_linear_ticket_from_branch`, `cil_external_surface_p`, `pb_load_bearing_paths`, `pb_load_bearing_p`. Skills source this and degrade silently when the file or repo is absent.
+- Add `/pb` — discovery index. Prints the canonical trigger table (repo's `## Workflow (pb-suite)` block, falling back to `pb-rules` canonical), every installed `pb-*` command with its description, repo signals (CIL? CLAUDE.md? load-bearing block? opt-ins?), and a one-sentence suggested next step from git state. Read-only.
+- `/pb-resume` now auto-bridges Linear + Notion context when running inside a CIL repo. Adds a capped section listing assigned Linear tickets (In Progress + Todo) and Notion specs updated in the window; the branch's matching ticket is starred. Pass `--no-cil` to suppress. Removed stale "out of scope (v1)" note about Linear/Notion crossref.
+- `/pb-pr` extracts a tracker key (e.g. `EVA-198`) from the branch name and seeds the PR summary from the ticket via the Linear MCP when available. Appends `Closes <KEY>` to the default template so Linear auto-links on open. Fails open — no tracker, no MCP, no-op.
+- `/pb-ship` splits the gate into four options: **ship / wait / defer / decide**. **defer** opens a Linear follow-up via MCP (or prints a paste-ready draft) for "do later, not strategic" — keeps `cil-decide` reserved for genuinely strategic choices, matching its scope-rule. Adds a step 6a exit-readiness forced-read prompt when the diff touches external surfaces, load-bearing paths, or `legal/` / `subprocessor` / `privacy` / `billing/` / `auth/` in a CIL repo. Reads `CIL/exit-readiness.md` when present.
+- `/pb-cso` adds a step 6b canonical-narrative check. When `CLAUDE.md` declares a canonical narrative (e.g. privacy-first) AND the diff adds user-facing copy on an external surface, surfaces in `IMPORTANT` when no concrete claim backs the narrative, `BLOCKER` when the copy actively contradicts it. Cliché "we take X seriously" lines do not count.
+- `/pb-rules` canonical block now (1) documents the `## pb-suite: load-bearing files` block — repo-level globs consumed by `/pb-ship` (classifier) and `/pb-cso` (severity heightening); (2) mentions `--cil` for `/pb-evolve` when in a CIL repo; (3) adds a trigger row for branch-encoded tracker keys (`EVA-198-foo` → `Closes` footer).
+- `/pb-evolve` accepts `--cil` (auto-enabled when `cil_repo_p`, pass `--cil=off` to suppress). Ingests `CIL/improvements/*.md` and `CIL/incidents.md` in addition to the `.claude/*.md` artifacts. Marks CIL-sourced samples with `[CIL]` in step 6.
+- `install` now also symlinks `commands/pb.md` (previously only `pb-*.md` matched the glob).
+
 ## 0.3.1
 
 - Add `/pb-rules` — inject the canonical pb-suite Workflow block (trigger table mapping change-types to commands, risk buckets, severity model, default test stack) into a `CLAUDE.md` file. Per-repo by default; `--global` writes to `~/.claude/CLAUDE.md`. Idempotent: diffs against existing block, asks before overwriting. Single source of truth — re-run after suite updates to pick up changes.

@@ -1,7 +1,7 @@
 ---
 description: Read learning artifacts written by pb-check and pb-investigate, cluster recurring patterns across PRs, and propose surgical edits to pb-* skills. Never auto-applies — every candidate goes through explicit confirmation. The suite evolves from real signal, not vibes.
 allowed-tools: [Bash, Read, Edit, Glob, Grep, AskUserQuestion]
-argument-hint: "[--global] [--since=Nd] [--skill=pb-name] [--apply]"
+argument-hint: "[--global] [--cil] [--since=Nd] [--skill=pb-name] [--apply]"
 ---
 
 # pb-evolve
@@ -17,6 +17,7 @@ The suite's "no telemetry" principle stands — pb-evolve never writes a log. It
 - **default** — scan, cluster, propose, no writes
 - **--apply** — per-candidate `AskUserQuestion` before each edit
 - **--global** — scan `$PB_PROJECTS_DIR` (default `~/Pixelbrew/Projects/Active`), walk one level deep (same convention as `/pb-across`)
+- **--cil** — in addition to `.claude/lessons.md` + `.claude/incidents.md`, ingest `CIL/improvements/*.md` and `CIL/incidents.md` if present. Auto-enabled when `cil_repo_p` (top-level `CIL/sources.md` exists) — pass `--cil=off` to suppress
 - **--since=Nd** — limit entries to the last N days (default 90)
 - **--skill=pb-name** — only propose edits to that skill
 
@@ -37,6 +38,8 @@ Parse `$ARGUMENTS`: `--global`, `--since=Nd`, `--skill=pb-name`, `--apply`. Defa
 ### 2. Locate learning artifacts
 
 Local (default): `./.claude/lessons.md` and `./.claude/incidents.md` in the current repo.
+
+CIL-augmented (`--cil` or auto when `cil_repo_p`): also read `./CIL/improvements/*.md` (treat each file as one cluster signal — its title becomes the topic, body becomes one lesson-equivalent entry) and `./CIL/incidents.md` if present. Source these in addition to the `.claude/*.md` artifacts; do not deduplicate, but mark the source in step 6 output (`[CIL]` prefix on samples).
 
 Global (`--global`):
 

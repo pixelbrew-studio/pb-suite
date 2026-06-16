@@ -20,7 +20,7 @@ linked=0
 skipped=0
 backed_up=0
 
-for src in "$COMMANDS_DIR"/pb-*.md; do
+for src in "$COMMANDS_DIR"/pb-*.md "$COMMANDS_DIR"/pb.md; do
   [ -f "$src" ] || continue
   name="$(basename "$src")"
   dst="$TARGET_DIR/$name"
@@ -47,7 +47,7 @@ if [ -f "$BOOTSTRAP_SRC" ]; then
   if [ -L "$BOOTSTRAP_DST" ] && [ "$(readlink "$BOOTSTRAP_DST")" = "$BOOTSTRAP_SRC" ]; then
     :
   else
-    [ -e "$BOOTSTRAP_DST" ] && rm -f "$BOOTSTRAP_DST"
+    { [ -e "$BOOTSTRAP_DST" ] || [ -L "$BOOTSTRAP_DST" ]; } && rm -f "$BOOTSTRAP_DST"
     ln -s "$BOOTSTRAP_SRC" "$BOOTSTRAP_DST"
   fi
 fi

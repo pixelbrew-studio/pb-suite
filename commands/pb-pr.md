@@ -47,6 +47,15 @@ git diff --stat "$BASE"...HEAD                                    # what files c
 git diff "$BASE"...HEAD                                           # the actual diff (full read)
 ```
 
+If inside a CIL repo (or any repo where the branch encodes a tracker key), try to extract the ticket:
+
+```bash
+source "$PB_SUITE/scripts/lib/cil.sh"
+TICKET=$(cil_linear_ticket_from_branch "$BRANCH")
+```
+
+When `$TICKET` is non-empty: fetch the ticket title + one-line description via the Linear MCP if available (any tool whose name contains `linear`). Use this to seed the PR summary's "why" line and add a `Closes <TICKET>` footer (Linear auto-links on PR open). On MCP failure or no key found: continue without it — never block on tracker fetch.
+
 Read in this order — commits first (they state intent), stat second (scope), full diff third (what actually changed).
 
 If commits are mostly auto-checkpoints or WIP messages without substance: rely on the diff. If the diff is small (<50 lines), read it fully. If large, focus on new functions, route handlers, type definitions, and any file with >20 lines changed.
@@ -103,6 +112,9 @@ Default suite format when no project template exists:
 - [ ] <automatable check — unit test, e2e, lint, build>
 - [ ] <manual check — what to click, what to verify visually>
 - [ ] <regression check — what should still work>
+
+<!-- when $TICKET set -->
+Closes <TICKET>
 ```
 
 Rules for filling each section:

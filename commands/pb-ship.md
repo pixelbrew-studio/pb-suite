@@ -85,7 +85,7 @@ For each file in `NEW_FILES`, read it and classify against these heuristics. App
 - Asserts a security-sensitive contract — auth check on a route, RLS enforcement, webhook signature verification, secret handling.
 - Asserts a payment / billing / data-integrity path.
 - Block comment or test name explicitly references a fixed bug, regression, or commit SHA.
-- Touches a file listed under "preserved load-bearing files" (or equivalent) in the project's `CLAUDE.md`.
+- Touches a file matched by the canonical `## pb-suite: load-bearing files` block in the project's `CLAUDE.md` (parsed via `pb_load_bearing_paths` in `scripts/lib/cil.sh`).
 
 **revert** — at least one of:
 - Visual / touch-target / spacing / typography assertion (high design volatility).
@@ -137,15 +137,24 @@ With `--no-regress`: revert all new files, equivalent to the original verify-mod
 
 The clean-tree preflight in step 1 makes the per-file revert safe — every change at this point came from `e2e-from-pr`.
 
-### 6. Gate
+### 6a. Exit-readiness prompt (CIL repos only)
+
+```bash
+source "$PB_SUITE/scripts/lib/cil.sh"
+```
+
+If `cil_repo_p` AND any changed file under this PR matches an external surface (`cil_external_surface_p`), a load-bearing path (`pb_load_bearing_p`), or `legal/`, `subprocessor`, `privacy`, `billing/`, `auth/`: print the three exit-readiness tests verbatim (reading `CIL/exit-readiness.md` if present) and pause once for the user to acknowledge. Do not gate — this is a forced read, not a decision. One-time per ship.
+
+### 6b. Gate
 
 If `--dry` is in `$ARGUMENTS`: skip to step 8.
 
-Use the `AskUserQuestion` tool with these three options:
+Use the `AskUserQuestion` tool with these four options:
 
 - **ship** — squash-merge the PR now
 - **wait** — leave the PR open, exit
-- **decide** — log a CIL decision first (success criteria, meet-moment, evidence), then re-run `pb-ship` when ready
+- **defer** — open a Linear follow-up (via Linear MCP if available, else print the suggested title/body for the user to paste), then exit. Use this for "do later, not strategic"
+- **decide** — log a CIL decision first via `/cil-decide`. Use this ONLY when the choice is strategic (multiple plausible outcomes, you might later question A vs B). The command itself enforces that scope — if the only "rejected option" is "don't merge", `cil-decide` will refuse and you should pick **defer** instead
 
 ### 7. Action
 
@@ -153,12 +162,13 @@ Based on the user's choice:
 
 - **ship** → invoke the `squash-merge` skill on this PR. The skill handles commit-message crafting, branch cleanup, and the actual merge.
 - **wait** → exit. Print the PR URL.
+- **defer** → create a Linear ticket via the Linear MCP (or print a paste-ready draft) with the PR's title, link, and a one-line "deferred at <date>, reason: <user-supplied>" body. Exit.
 - **decide** → invoke `cil-decide` with the PR context. After the decision lands, instruct the user to re-run `/pb-ship` when they are ready to ship.
 
 ### 8. Report
 
 ```
-pb-ship: <shipped | left-open | decided | dry-pass | dry-fail | blocked>
+pb-ship: <shipped | left-open | deferred | decided | dry-pass | dry-fail | blocked>
   pb-review:   N findings (X BLOCKER, Y IMPORTANT, Z NIT)
   verify:      K test-plan items, all pass (or: M failed)
   classify:    P persisted, R reverted, A asked
