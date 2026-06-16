@@ -173,11 +173,11 @@ assert "pb-investigate step 10 does nothing when file is absent" "$?"
 
 echo "[VERSION / CHANGELOG]"
 
-[ "$(cat VERSION | tr -d '[:space:]')" = "0.3.1" ]
-assert "VERSION file is 0.3.1" "$?"
+[ "$(cat VERSION | tr -d '[:space:]')" = "0.4.0" ]
+assert "VERSION file is 0.4.0" "$?"
 
-grep -q '^## 0\.3\.1' CHANGELOG.md && grep -q '^## 0\.3\.0' CHANGELOG.md && grep -q '^## 0\.1\.0' CHANGELOG.md
-assert "CHANGELOG has 0.3.1, 0.3.0, 0.1.0 entries" "$?"
+grep -q '^## 0\.4\.0' CHANGELOG.md && grep -q '^## 0\.3\.1' CHANGELOG.md && grep -q '^## 0\.1\.0' CHANGELOG.md
+assert "CHANGELOG has 0.4.0, 0.3.1, 0.1.0 entries" "$?"
 
 # --- Summary ---
 
