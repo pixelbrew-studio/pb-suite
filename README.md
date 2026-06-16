@@ -102,6 +102,7 @@ Two-letter mnemonic for the cluster, then a one-line summary. Full instructions 
 
 | Command | Purpose |
 |---|---|
+| `/pb-implement` | Spec-first feature implementation — the orchestration layer that drives the rest of the suite. Builds a written spec (interviews via `AskUserQuestion` when context is thin), declares a verification plan *before* coding that **routes specialist reviews by what the change touches** (`/pb-cso --diff`, `/pb-design-review`, `/pb-copy`, `/pb-env-check` via the `CLAUDE.md` trigger table), gates strict-bucket work behind explicit human approval, then drives every slice through `/pb-tdd`'s RED→GREEN→REFACTOR loop with one sub-agent per slice (parallel waves; stuck slices escalate to `/pb-investigate`). Reviews with `/pb-check` breadth plus an independent cross-model Codex pass, feeds recurring patterns to `.claude/lessons.md` / `.claude/incidents.md` (→ `/pb-evolve`), hands off to `/pb-pr`, and proposes capturing repeatable work as a skill. `--spec <file>` / `--interview` / `--plan-only` / `--no-parallel`. |
 | `/pb-tdd` | Test-first workflow. Greenfield (RED→GREEN→REFACTOR) or brownfield (CHARACTERIZE→RED→GREEN→REFACTOR), auto-detected. Risk buckets — strict for money/privacy/auth/AI/retention/evaluation, light for routine CRUD, skip for docs. One vertical slice per call. `--auto` infers the slice from working tree + branch + recent commits. |
 
 **Suite management and cross-project**
