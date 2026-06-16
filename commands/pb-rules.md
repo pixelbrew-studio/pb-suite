@@ -74,6 +74,7 @@ Triggers — apply unless the user explicitly opts out:
 | Pre-merge | `/pb-ship` (refuse the merge if BLOCKERs remain) |
 | Live QA of a deploy | `/pb-qa <url>` for evidence, then `/pb-investigate` for cause |
 | Fetching URL content | `/pb-browse <url>` instead of WebFetch |
+| Branch name encodes a tracker key (e.g. `EVA-198-foo`) | `/pb-pr` will seed the summary from the ticket and append `Closes <KEY>` |
 
 Risk buckets — strict means TDD required, full edge-case broadening:
 
@@ -94,6 +95,42 @@ Learning artifacts (opt-in, committed):
 - `.claude/lessons.md` — `/pb-check` appends cross-PR patterns here
 - `.claude/incidents.md` — `/pb-investigate` appends one-line root causes here
 - `/pb-evolve` reads both and proposes suite edits at n ≥ 3
+- In a CIL repo (top-level `CIL/sources.md` present), `/pb-evolve --cil` additionally reads `CIL/improvements/*.md` and routes incidents to `CIL/incidents.md` instead of `.claude/incidents.md`.
+
+## pb-suite: load-bearing files
+
+Canonical block consumed by `/pb-ship` (classifier) and `/pb-cso` (severity heightening). One glob per bullet. Match semantics: shell glob against repo-relative path.
+
+```
+- src/lib/billing/**
+- src/lib/auth/**
+- packages/*/billing/**
+```
+
+If absent, `pb-ship` falls back to its built-in load-bearing heuristics. Adding the block makes the classifier deterministic for this repo.
+
+## pb-suite: next-step nudges
+
+End each reply with one line `Next: /<command> — <reason in <=8 words>` when a pb-suite or CIL command logically follows. Skip the line when:
+
+- The reply is purely conversational (explanation, question back, opinion without code impact).
+- The reply already names a pb-/cil-command inline.
+- We're mid-flow inside `/pb-investigate`, `/pb-tdd`, or `/cil-decide` (the skill drives the next step).
+
+Decision tree — first match wins:
+
+1. Code/copy just changed, nothing reviewed → `/pb-check` (or `/pb-review` alone).
+2. Diff touches `marketing|landing|privacy|legal|subprocessor` → `/pb-cso --diff`.
+3. Diff touches `.tsx|.css|tailwind` without review → `/pb-design-review`.
+4. Branch has commits, no PR → `/pb-pr`.
+5. PR open, CI green, no BLOCKERs → `/pb-ship`.
+6. Bug reproduced without root cause → `/pb-investigate`.
+7. New behavior planned, no test → `/pb-tdd <slice>`.
+8. Strategic choice with multiple plausible outcomes in this reply → `/cil-decide` (CIL repo only).
+9. "Where was I?" / context recovery → `/pb-resume`.
+10. Plan-vs-build gap suspected across sources → `/cil-pulse` (CIL repo only).
+
+Style: one line, no emoji, no code block, no "(Recommended)". Reason is concrete — "load-bearing diff, security pass" beats "for safety".
 
 <!-- Injected by /pb-rules. Re-run /pb-rules to pick up suite updates. -->
 ````

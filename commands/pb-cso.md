@@ -94,6 +94,27 @@ Tailor to the detected stack. Skip categories that don't apply.
 - **A09 Logging Failures** — auth failures logged? PII in logs (BAD)? Webhook failures alerted?
 - **A10 SSRF** — any code that fetches a URL the user controls? `fetch(req.body.url)`, image-proxy, webhook callback registration without allowlisting?
 
+### 6b. Canonical-narrative check (external surfaces)
+
+Some projects declare a canonical narrative in `CLAUDE.md` — a claim every external surface must make concrete (e.g. Acme's privacy-first / non-retention / GDPR posture, or a competitor's "no-data-sold" posture). When the diff adds or modifies copy on an external surface, that surface must back the claim with at least one concrete, verifiable statement — not a "we take X seriously" cliché.
+
+```bash
+source "$PB_SUITE/scripts/lib/cil.sh"
+```
+
+Apply only when ALL of the following hold:
+
+- `CLAUDE.md` mentions a canonical narrative (grep for "canonical narrative", "canonical positioning", "privacy-first", or a `## Brand` / `## Positioning` section asserting one)
+- The diff adds/modifies lines under a path where `cil_external_surface_p` returns true
+- Those lines are user-facing copy (JSX text, markdown body, alt text, email body — not CSS, not tests)
+
+Verdict:
+
+- **IMPORTANT** when the surface adds copy without a concrete claim backing the canonical narrative (concrete = a number, a named guarantee, a verifiable policy link, a specific technical commitment like "documents purged after N days").
+- **BLOCKER** when the copy actively contradicts the canonical narrative (e.g. claims "we use your data to train models" while the project's narrative is non-retention).
+
+Quote the specific lines in the finding. One sentence on what to add. No NIT — if the gap is too small to matter, drop it.
+
 ### 7. STRIDE on critical assets
 
 For each critical asset (auth store, payment flow, primary database, file storage):

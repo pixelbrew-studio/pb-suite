@@ -25,6 +25,19 @@ Lichte vervanger voor Garry Tan's gstack — een hand-picked set Claude Code sla
 | `/pb-init` | Opt een project in voor pb-suite — voegt gitignore-entries toe voor `.pb-qa/` / `.pb-design-review/` / `.pb-browse/`, biedt aan om `.claude/lessons.md` en `.claude/incidents.md` te creëren, scaffold `CLAUDE.md` skeleton als die ontbreekt. Per-item AskUserQuestion. Idempotent — re-run is veilig |
 | `/pb-pr` | Draft een PR description vanuit de branch-diff. Leest `CLAUDE.md` voor brand-tone, infereert intent (fix/feature/refactor/chore/mixed), vult `.github/pull_request_template.md` als die bestaat, anders een suite-default. Toont draft → user kiest open / draft / revise / copy / cancel. Mergen blijft `/pb-ship` |
 | `/pb-rules` | Injecteert de canonical pb-suite Workflow block (trigger-tabel, risk buckets, severity model) in een `CLAUDE.md`. Per-repo default, `--global` schrijft naar `~/.claude/CLAUDE.md`. Idempotent — diff tegen bestaande block, vraagt voor overschrijven. Single source of truth: re-run na suite-updates om changes op te pikken |
+| `/pb` | Discovery-index. Print de trigger-tabel + alle pb-* commands met description + repo-signals (CIL? CLAUDE.md? load-bearing? opt-ins?) + one-line suggested next step. Read-only |
+
+## CIL integration (opt-in, auto-detected)
+
+Wanneer een repo een top-level `CIL/sources.md` bevat, schakelen sommige pb-* commands automatisch een CIL-bridge in:
+
+- `/pb-resume` — voegt Linear (assigned, In Progress + Todo) en recente Notion-specs toe. `--no-cil` om te onderdrukken.
+- `/pb-pr` — extraheert tracker-key uit branch-naam (bv. `EVA-198-foo`), seed't summary uit Linear-ticket, voegt `Closes <KEY>` toe.
+- `/pb-ship` — gate splitst in ship/wait/defer/decide. `defer` opent Linear-follow-up; `decide` blijft voor strategische keuzes (cil-decide enforcement). Exit-readiness forced-read prompt bij external-surface / load-bearing / legal / billing / auth diffs.
+- `/pb-cso` — canonical-narrative check: bij privacy-first declaratie in CLAUDE.md + external-surface copy diff, vlagt missende concrete privacy-claim (IMPORTANT) of tegenstrijdige copy (BLOCKER).
+- `/pb-evolve --cil` — leest naast `.claude/lessons.md` ook `CIL/improvements/*.md` en `CIL/incidents.md`.
+
+Buiten een CIL-repo: alle bovenstaande gedragingen no-op. Geen MCP-vereiste — als de Linear/Notion MCP niet is gekoppeld, drop de bridge stil en ga door.
 
 ## Verify vs regress (pb-ship)
 

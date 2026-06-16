@@ -173,11 +173,62 @@ assert "pb-investigate step 10 does nothing when file is absent" "$?"
 
 echo "[VERSION / CHANGELOG]"
 
-[ "$(cat VERSION | tr -d '[:space:]')" = "0.3.1" ]
-assert "VERSION file is 0.3.1" "$?"
+[ "$(cat VERSION | tr -d '[:space:]')" = "0.4.0" ]
+assert "VERSION file is 0.4.0" "$?"
 
-grep -q '^## 0\.3\.1' CHANGELOG.md && grep -q '^## 0\.3\.0' CHANGELOG.md && grep -q '^## 0\.1\.0' CHANGELOG.md
-assert "CHANGELOG has 0.3.1, 0.3.0, 0.1.0 entries" "$?"
+grep -q '^## 0\.4\.0' CHANGELOG.md && grep -q '^## 0\.3\.1' CHANGELOG.md && grep -q '^## 0\.1\.0' CHANGELOG.md
+assert "CHANGELOG has 0.4.0, 0.3.1, 0.1.0 entries" "$?"
+
+# --- Section: 0.4.0 CIL integration ---
+
+echo "[CIL integration]"
+
+[ -f scripts/lib/cil.sh ]
+assert "scripts/lib/cil.sh exists" "$?"
+
+grep -q '^cil_repo_p' scripts/lib/cil.sh && grep -q '^cil_linear_ticket_from_branch' scripts/lib/cil.sh && grep -q '^cil_external_surface_p' scripts/lib/cil.sh
+assert "cil.sh exports the three core helpers" "$?"
+
+# load-bearing helpers
+grep -q '^pb_load_bearing_paths' scripts/lib/cil.sh && grep -q '^pb_load_bearing_p' scripts/lib/cil.sh
+assert "cil.sh exports load-bearing helpers" "$?"
+
+# Linear key extraction is idempotent (uppercase + hyphen-normalized)
+KEY=$(bash -c 'source scripts/lib/cil.sh; cil_linear_ticket_from_branch eva-198-some-feature')
+[ "$KEY" = "EVA-198" ]
+assert "cil_linear_ticket_from_branch normalizes 'eva-198-...' to 'EVA-198'" "$?"
+
+# Suite-level wiring
+grep -q '/pb-ship.md\|pb-ship.md' commands/pb-ship.md 2>/dev/null  # sanity
+grep -q 'pb_load_bearing_p\|pb_load_bearing_paths\|canonical .## pb-suite: load-bearing files. block' commands/pb-ship.md
+assert "pb-ship references canonical load-bearing block" "$?"
+
+grep -q 'defer' commands/pb-ship.md && grep -q 'decide' commands/pb-ship.md
+assert "pb-ship gate has defer + decide options" "$?"
+
+grep -q 'exit-readiness' commands/pb-ship.md
+assert "pb-ship has exit-readiness prompt" "$?"
+
+grep -q 'cil_linear_ticket_from_branch\|TICKET=' commands/pb-pr.md
+assert "pb-pr extracts tracker key from branch" "$?"
+
+grep -q 'cil_repo_p\|CIL_ACTIVE' commands/pb-resume.md
+assert "pb-resume has CIL bridge" "$?"
+
+grep -q 'canonical-narrative\|canonical narrative' commands/pb-cso.md
+assert "pb-cso has canonical-narrative check" "$?"
+
+grep -q '## pb-suite: load-bearing files' commands/pb-rules.md
+assert "pb-rules documents load-bearing block" "$?"
+
+grep -q -- '--cil' commands/pb-evolve.md
+assert "pb-evolve accepts --cil flag" "$?"
+
+[ -f commands/pb.md ]
+assert "pb.md (discovery index) exists" "$?"
+
+grep -q 'pb\.md\|pb\.md$' install
+assert "install picks up pb.md" "$?"
 
 # --- Summary ---
 
