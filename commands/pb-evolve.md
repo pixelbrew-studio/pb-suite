@@ -94,6 +94,7 @@ Default keyword → skill mapping:
 | missing test, swallowed error, race condition, off-by-one | `pb-review` |
 | broken import, stale spec, all-skipped | `pb-prune-tests` |
 | trope word, exclamation, emoji-in-copy, brand-tone | `pb-copy` |
+| missing schema, semantic-term gap, thin content, keyword placement, E-E-A-T, AI-citability | `pb-pop` (rules in `references/seo-signals.md`) |
 | env drift, prod-only, leaked secret in example | `pb-env-check` |
 | PII, retention, ZDR, lawful basis | `pb-audit`, `pb-tdd` (strict bucket) |
 
@@ -104,6 +105,12 @@ For each cluster, propose **one** surgical edit to the candidate skill. Allowed 
 - **add** — new bullet under an existing checklist section
 - **remove** — a check whose false-positive rate is high (lessons explicitly contradict it n ≥ 3)
 - **re-tier** — move a check between BLOCKER / IMPORTANT / NIT
+
+A candidate may target a knowledge-base file the skill reads at runtime rather
+than the skill body — for `pb-pop`, that is `references/seo-signals.md` (adjust a
+weight, add a signal, re-band a threshold, extend the schema catalog). When you
+edit a `references/*.md` file, append a dated bullet to its own changelog
+section so the change stays traceable.
 
 Never:
 
