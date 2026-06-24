@@ -173,11 +173,11 @@ assert "pb-investigate step 10 does nothing when file is absent" "$?"
 
 echo "[VERSION / CHANGELOG]"
 
-[ "$(cat VERSION | tr -d '[:space:]')" = "0.4.0" ]
-assert "VERSION file is 0.4.0" "$?"
+[ "$(cat VERSION | tr -d '[:space:]')" = "0.5.0" ]
+assert "VERSION file is 0.5.0" "$?"
 
-grep -q '^## 0\.4\.0' CHANGELOG.md && grep -q '^## 0\.3\.1' CHANGELOG.md && grep -q '^## 0\.1\.0' CHANGELOG.md
-assert "CHANGELOG has 0.4.0, 0.3.1, 0.1.0 entries" "$?"
+grep -q '^## 0\.5\.0' CHANGELOG.md && grep -q '^## 0\.4\.0' CHANGELOG.md && grep -q '^## 0\.1\.0' CHANGELOG.md
+assert "CHANGELOG has 0.5.0, 0.4.0, 0.1.0 entries" "$?"
 
 # --- Section: 0.4.0 CIL integration ---
 
@@ -229,6 +229,71 @@ assert "pb.md (discovery index) exists" "$?"
 
 grep -q 'pb\.md\|pb\.md$' install
 assert "install picks up pb.md" "$?"
+
+# --- Section: 0.5.0 pb-pop ---
+
+echo "[pb-pop]"
+
+[ -f commands/pb-pop.md ]
+assert "pb-pop.md skill exists" "$?"
+
+head -20 commands/pb-pop.md | grep -q '^# pb-pop'
+assert "pb-pop.md has canonical '# pb-pop' heading" "$?"
+
+grep -q 'source "\$HOME/.claude/commands/pb-bootstrap.sh"' commands/pb-pop.md
+assert "pb-pop sources pb-bootstrap.sh" "$?"
+
+[ -f scripts/pop.ts ]
+assert "scripts/pop.ts extractor exists" "$?"
+
+# pop.ts must KEEP what browse.ts strips — assert it reads JSON-LD + meta
+grep -q 'application/ld+json' scripts/pop.ts && grep -q 'meta\[name="description"\]' scripts/pop.ts
+assert "pop.ts extracts JSON-LD schema + meta description" "$?"
+
+# pop.ts checks AI-crawler access (robots.txt) + extractability sections
+grep -q 'robots.txt' scripts/pop.ts && grep -q 'GPTBot' scripts/pop.ts && grep -q 'aiAccess' scripts/pop.ts
+assert "pop.ts checks AI-crawler access via robots.txt" "$?"
+
+grep -q 'sections' scripts/pop.ts
+assert "pop.ts returns sections[] for passage extractability" "$?"
+
+# skill exposes the AI-citation features
+grep -q -- '--cite-check' commands/pb-pop.md
+assert "pb-pop has --cite-check mode" "$?"
+
+grep -qi 'AI-access gate\|AI-crawler access\|aiAccess' commands/pb-pop.md
+assert "pb-pop has the AI-crawler access gate" "$?"
+
+grep -qi 'extractability' commands/pb-pop.md
+assert "pb-pop scores passage extractability" "$?"
+
+grep -qi 'extractability' references/seo-signals.md && grep -q 'AI-crawler access' references/seo-signals.md
+assert "seo-signals.md documents extractability + AI-access gate" "$?"
+
+[ -f references/seo-signals.md ]
+assert "references/seo-signals.md knowledge base exists" "$?"
+
+# Knowledge base drives scoring — weights + bands present
+grep -q 'Weight' references/seo-signals.md && grep -qE 'Critical|Strong' references/seo-signals.md
+assert "seo-signals.md has weights and band thresholds" "$?"
+
+# Skill reads the KB rather than hardcoding scoring
+grep -q 'references/seo-signals.md\|seo-signals.md' commands/pb-pop.md
+assert "pb-pop reads references/seo-signals.md" "$?"
+
+# pb-pop is report-only (no Edit/Write in allowed-tools)
+! grep -E '^allowed-tools:.*\b(Edit|Write)\b' commands/pb-pop.md >/dev/null
+assert "pb-pop is report-only (no Edit/Write tools)" "$?"
+
+# Wiring: trigger row, evolve target, README index
+grep -q 'pb-pop' commands/pb-rules.md
+assert "pb-rules has a pb-pop trigger row" "$?"
+
+grep -q 'pb-pop' commands/pb-evolve.md && grep -q 'seo-signals.md' commands/pb-evolve.md
+assert "pb-evolve can target pb-pop / seo-signals.md" "$?"
+
+grep -q '/pb-pop' README.md
+assert "README lists /pb-pop" "$?"
 
 # --- Summary ---
 
