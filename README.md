@@ -17,9 +17,12 @@ banjul/
     browse.ts        pb-browse: URL → markdown via Playwright + Turndown
     qa.ts            pb-qa: visit routes, capture console/network errors, screenshots
     prune-tests.ts   pb-prune-tests: detect broken imports, all-skipped files
+    pop.ts           pb-pop: URL/file → SEO signals (schema, headings, meta, structure)
     lib/
       bootstrap.sh   single entry point — sets $PB_SUITE, sourced by commands
       scope.sh       shared diff-scope detection for commands that read a diff
+  references/        editable knowledge bases read by commands at runtime
+    seo-signals.md   pb-pop scoring rules — weights, bands, schema catalog, sector strictness
   tests/             bash smoke tests for install mechanics and content invariants
   install            symlink commands/ into ~/.claude/commands/, install deps
   uninstall          remove only symlinks that point back to this repo
@@ -69,6 +72,7 @@ To add a new command, drop `commands/pb-<name>.md` and run `./install` to symlin
 - Reuse the severity model below — do not invent new severity tiers.
 - If the command reads a diff, source `scripts/lib/scope.sh` to get the standard scope-detection logic.
 - Respect per-project `CLAUDE.md`. Do not hard-code style rules that belong in a project's own instructions.
+- Volatile rules that change as insights arrive (scoring weights, signal lists) belong in a dated `references/*.md` file the command reads at runtime — not baked into the skill body. `/pb-pop` does this with `references/seo-signals.md`; `/pb-evolve` can propose edits to it.
 - No telemetry, no session state, no update checks.
 
 ## Commands
@@ -83,6 +87,7 @@ Two-letter mnemonic for the cluster, then a one-line summary. Full instructions 
 | `/pb-design-review` | UI review combining Refactoring UI principles, structured visual critique, and the suite severity model. Diff pass + optional live-URL screenshot critique. |
 | `/pb-cso` | Pre-launch security audit (OWASP Top 10 + STRIDE) with a confidence gate. `--diff` for changed-files-only. |
 | `/pb-copy` | Copywriting review/rewrite. Strips AI-slop, enforces `CLAUDE.md` brand-tone, applies one framework per surface (AIDA/PAS/FAB/BAB). Modes: rewrite / critique / generate / brand-check. |
+| `/pb-pop` | PageOptimizer-Pro-style SEO / AI-citability audit. Scores a page 0-100 (keyword placement, schema, semantic terms, structure, internal links, depth, E-E-A-T) benchmarked against the pages ranking for the target query. Report-only — schema gaps emit paste-ready JSON-LD, prose gaps hand off to `/pb-copy`. `--blueprint` specs a new page; `--no-benchmark` for absolute scoring. Rules live in `references/seo-signals.md`. |
 | `/pb-check` | Single-call orchestrator: runs pb-review + pb-design-review (if UI) + pb-cso `--diff` + pb-qa (if URL given), aggregates findings, surfaces cross-PR patterns. Audit only — no merge, no test runs. |
 | `/pb-ship` | Pre-merge gate: pb-review + `e2e-from-pr` verify, classifies each new spec (`persist` / `revert` / `ask`), ship/wait/decide prompt. Never auto-merges. Refuses `--no-verify`, `--no-gpg-sign`, `--force`. |
 | `/pb-pr` | Drafts a PR description from the branch diff. Reads `CLAUDE.md` for tone, fills `.github/pull_request_template.md` if present. User picks open / draft / revise / copy / cancel. Pass `--prepare` to write the draft to `.context/pr-draft.md` + clipboard instead of calling `gh` — for Conductor's Create PR button or any non-`gh` flow. |
