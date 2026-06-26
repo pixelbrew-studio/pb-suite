@@ -87,6 +87,16 @@ which is also why "be specific and concrete" fixes most of them at once.
   of *concrete* antithesis is not evidence of AI — do not flag on density alone.
 - **Rule of three.** Triads everywhere: "adjective, adjective, adjective" or
   "phrase, phrase, and phrase," used to make thin analysis look thorough.
+
+  **Empty vs. concrete discriminator** (same logic as negative parallelism). The
+  tell is the *empty* triad — interchangeable filler that pads thin analysis
+  ("creative, smart, and passionate"; "robust, scalable, and innovative"). A triad
+  whose three members each carry **distinct, concrete content** — escalating
+  definitions, anaphora with specific referents ("An outcome with no criterion is
+  a preference. A criterion with no source is an assertion. A source no human has
+  weighed is an unread quote.") — is deliberate human rhetoric. Do not flag on
+  count alone; also note that AI skews to *threes* specifically, so varied list
+  lengths (fours, fives) are weak evidence *against* AI.
 - **Lexical diversity / elegant variation.** A repetition penalty makes it swap
   in needless synonyms for the same referent ("creativity" → "artistic
   aspirations" → "artistic vision" → "creative expression"). (Caveat: some
@@ -194,7 +204,7 @@ Severity uses the suite model: **BLOCKER** auto-fix when local and obvious;
 | **AIW-07** | "Challenges / Future prospects" formula | "Despite its …, faces challenges…" → upbeat/speculative close; a "Challenges" or "Future Outlook" section | IMPORTANT | Cut the formula; keep only specific, sourced challenges if real |
 | **AIW-08** | Copulative avoidance | "serves as / stands as / represents / features / offers" where *is/are/has* is meant | NIT (IMPORTANT if pervasive) | Restore *is / are / has* unless the fancier verb adds real meaning |
 | **AIW-09** | Negative parallelism | "not just X, it's Y," "not X but Y," "no…, no…, just…," "X rather than Y" — **only when the affirmative half is empty/generic** (a journey, something more). Concrete antithesis (the affirmative half names a specific thing) is human rhetoric; do not flag on density alone, esp. in how-to / "avoid these traps" copy | IMPORTANT (empty form) · do-not-flag (concrete form) | Pick the one true statement and say it plainly; keep the contrast when the affirmative half is specific |
-| **AIW-10** | Rule of three | strings of three adjectives/phrases, esp. repeated across sentences | NIT (IMPORTANT if it's the dominant rhythm) | Keep what's load-bearing; cut filler items; vary structure |
+| **AIW-10** | Rule of three | strings of three adjectives/phrases, esp. repeated across sentences — **only the empty form** (interchangeable filler: "creative, smart, and passionate"). Triads whose members carry distinct concrete content (escalating definitions, anaphora with specific referents) are deliberate rhetoric; do not flag on count alone | NIT, empty form (IMPORTANT if it's the dominant rhythm) · do-not-flag, concrete form | Keep what's load-bearing; cut filler items; vary structure — but leave concrete triads alone |
 | **AIW-11** | Elegant variation | needless synonym-swapping for one referent across a passage | NIT | Repeat the plain noun; don't dress it up |
 | **AIW-12** | Title Case headings | every main word capitalized, against house sentence case | NIT (BLOCKER if brand rule says sentence case) | Convert to sentence case |
 | **AIW-13** | Boldface overuse | bold on every key term / "key takeaways" pattern | NIT | Bold at most one phrase per block, or none |
@@ -246,6 +256,11 @@ Projects may extend or override this list in `CLAUDE.md`. A documented brand wor
 
 ## Changelog
 
+- 2026-06-26 — AIW-10: mirror the empty-vs-concrete discriminator onto rule of
+  three. Only interchangeable filler triads are a tell; triads with distinct
+  concrete members (escalating definitions, anaphora) are deliberate rhetoric.
+  Surfaced across three Evalgist blog/guide pages whose signature voice uses
+  concrete triads the count-based rule would over-fire on.
 - 2026-06-26 — AIW-09: add empty-vs-concrete discriminator. Negative parallelism
   is a tell only when the affirmative half is generic; concrete antithesis is
   human rhetoric and must not be flagged on density alone (esp. how-to / "avoid
