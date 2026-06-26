@@ -1,5 +1,5 @@
 ---
-description: Copywriting review and rewrite. Strips AI-slop ("dive into", "leverage", "In today's fast-paced landscape..."), enforces project brand-tone from CLAUDE.md, applies one copywriting framework per surface (AIDA/PAS/FAB/BAB). Mode-aware for marketing vs product copy. Severity-based output.
+description: Copywriting review and rewrite. Strips AI-slop ("dive into", "leverage", "In today's fast-paced landscape...") using the runtime AI-writing-signals knowledge base (distilled from Wikipedia:Signs of AI writing — 22 scored rules, density/combination confidence gate, false-positive guard), enforces project brand-tone from CLAUDE.md, applies one copywriting framework per surface (AIDA/PAS/FAB/BAB). Mode-aware for marketing vs product copy. Severity-based output.
 allowed-tools: [Bash, Read, Edit, Write, Glob, Grep, AskUserQuestion]
 argument-hint: "[copy text or file path] [--mode rewrite|critique|generate|brand-check] [--surface marketing|product|email|button]"
 ---
@@ -87,24 +87,27 @@ If `--surface` is given: use that. Otherwise infer:
 
 Surfaces have different rules — apply them in step 6 below.
 
-### 4. AI-slop check (BLOCKER if found, auto-fix in rewrite mode)
+### 4. AI-slop check (severity per the ruleset, auto-fix BLOCKERs in rewrite mode)
 
-Scan for trope words and patterns. The full list is in **Appendix: AI Tropes** at the bottom — edit it per project when needed.
+Load the runtime knowledge base — the authoritative, dated list of tells (it
+changes per model era, so it lives outside this skill body):
 
-**Trope words (highlight + propose replacement)** — common verbs (dive into, leverage, harness, unlock, empower, revolutionize, streamline, optimize, elevate, supercharge, transform), adjectives (robust, seamless, cutting-edge, game-changing, holistic, innovative, dynamic, transformative, comprehensive, world-class), nouns (journey, landscape, paradigm, synergy, ecosystem).
+```bash
+source "$HOME/.claude/commands/pb-bootstrap.sh"
+KB="$PB_SUITE/references/ai-writing-signals.md"
+[ -f "$KB" ] || { echo "pb-copy: AI-signals KB missing at $KB — run $PB_SUITE/install"; exit 1; }
+```
 
-**Trope patterns (BLOCKER)**:
-- "It's not just X, it's Y" — pick one
-- "The result?" / "The bottom line?" rhetorical pauses
-- Rule of three without substance ("creative, smart, and passionate")
-- Rhetorical questions that answer themselves ("Want more leads? Of course you do.")
-- Opening with "In today's fast-paced..."
-- "We're SO excited to announce..." (any excessive-enthusiasm formula)
-- Em-dashes used as comma-substitute three+ times in a paragraph
-- Every paragraph starts with the same construction
-- Sentence-length uniformity (every sentence ≈ same word count — LLM cadence tell)
+Read the KB. **Part A** is the in-depth summary of the five tell families (over-claiming content; AI-vocabulary/grammar; formatting; assistant leakage; markup/citation leakage). **Part B** is the 22-rule ruleset (AIW-01…AIW-22) with per-rule severity and fixes — apply it directly.
 
-In **rewrite** mode: replace trope words with the simpler equivalent from the appendix. Rewrite trope patterns into direct statements. Ask before any change that shifts meaning.
+Apply the KB's **confidence gate** — this is what keeps the pass from gutting good human copy:
+
+- **One weak signal alone is not a finding** — a single em dash, curly quote, AI-vocab word, or transition word is within normal human range. Respect the KB's "do-not-flag list."
+- **Density** — 3+ distinct AI-vocab words, or the same tell 3×+ in a short passage → flag at the rule's severity.
+- **Combination** — two or more *different* families present → raise one severity step.
+- **Leakage tells (families 4–5: AIW-18…AIW-22) are exempt** — a single placeholder slot (`[Your Name]`), assistant phrase ("Certainly!"), markdown bleeding into rendered copy, or `utm_source=chatgpt.com` link is a BLOCKER on its own; it can never be intentional shipped copy.
+
+In **rewrite** mode: replace AI-vocab words with the plain equivalent from the KB's word list (delete if the word carries no meaning), rewrite trope patterns into direct statements, strip leakage tells outright. Ask before any change that shifts meaning. The goal is the inverse of the source guide's: not to accuse, but to make the copy concrete, specific, and human — which fixes most tells at once, since they share one cause (regression to a generic, important-sounding mean).
 
 ### 5. Brand-tone check
 
@@ -201,7 +204,11 @@ In **rewrite** mode the rewritten copy is shown but only written back to file wh
 
 End with: apply changes / discuss findings / show again with one finding ignored?
 
-## Appendix: AI Tropes (edit per project as needed)
+## Appendix: AI Tropes (quick reference)
+
+The authoritative, dated list lives in `references/ai-writing-signals.md` (loaded
+in step 4) — edit *there* when the tells shift, not here. This appendix is a
+fast inline fallback for the most common swaps; the KB supersedes it on conflict.
 
 **Verbs to replace**: dive into → explore; leverage → use; harness → use; unlock → access; empower → help; revolutionize → change; streamline → simplify; optimize → improve; elevate → raise; supercharge → speed up; transform → change; navigate → use; foster → build; embark on → start.
 
