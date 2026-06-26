@@ -77,6 +77,14 @@ which is also why "be specific and concrete" fixes most of them at once.
   - *Not only X but also Y* / *It's not just X, it's Y*
   - *Not X, but Y* / *no…, no…, just…*
   - *X rather than Y* (reversed form, common in Grok)
+
+  **Empty vs. concrete discriminator.** Only the *empty* form is a tell — where
+  the affirmative half is generic or vacuous ("not just a tool, it's a *journey*";
+  "not X, but *something more*"). Antithesis where the affirmative half names a
+  **specific** thing is human rhetoric, not slop ("The remedy is not to avoid AI.
+  The remedy is to *force every judgment back to the criterion and the quote*").
+  Contrast is native to how-to and "avoid these traps" writing, so high density
+  of *concrete* antithesis is not evidence of AI — do not flag on density alone.
 - **Rule of three.** Triads everywhere: "adjective, adjective, adjective" or
   "phrase, phrase, and phrase," used to make thin analysis look thorough.
 - **Lexical diversity / elegant variation.** A repetition penalty makes it swap
@@ -185,7 +193,7 @@ Severity uses the suite model: **BLOCKER** auto-fix when local and obvious;
 | **AIW-06** | Vague attribution / overgeneralized opinion | "experts argue," "observers have cited," "several sources" (few cited), "such as" before a closed list | IMPORTANT | Name the source, or drop the claim; don't inflate one source into "experts" |
 | **AIW-07** | "Challenges / Future prospects" formula | "Despite its …, faces challenges…" → upbeat/speculative close; a "Challenges" or "Future Outlook" section | IMPORTANT | Cut the formula; keep only specific, sourced challenges if real |
 | **AIW-08** | Copulative avoidance | "serves as / stands as / represents / features / offers" where *is/are/has* is meant | NIT (IMPORTANT if pervasive) | Restore *is / are / has* unless the fancier verb adds real meaning |
-| **AIW-09** | Negative parallelism | "not just X, it's Y," "not X but Y," "no…, no…, just…," "X rather than Y" | IMPORTANT | Pick the one true statement and say it plainly |
+| **AIW-09** | Negative parallelism | "not just X, it's Y," "not X but Y," "no…, no…, just…," "X rather than Y" — **only when the affirmative half is empty/generic** (a journey, something more). Concrete antithesis (the affirmative half names a specific thing) is human rhetoric; do not flag on density alone, esp. in how-to / "avoid these traps" copy | IMPORTANT (empty form) · do-not-flag (concrete form) | Pick the one true statement and say it plainly; keep the contrast when the affirmative half is specific |
 | **AIW-10** | Rule of three | strings of three adjectives/phrases, esp. repeated across sentences | NIT (IMPORTANT if it's the dominant rhythm) | Keep what's load-bearing; cut filler items; vary structure |
 | **AIW-11** | Elegant variation | needless synonym-swapping for one referent across a passage | NIT | Repeat the plain noun; don't dress it up |
 | **AIW-12** | Title Case headings | every main word capitalized, against house sentence case | NIT (BLOCKER if brand rule says sentence case) | Convert to sentence case |
@@ -238,6 +246,11 @@ Projects may extend or override this list in `CLAUDE.md`. A documented brand wor
 
 ## Changelog
 
+- 2026-06-26 — AIW-09: add empty-vs-concrete discriminator. Negative parallelism
+  is a tell only when the affirmative half is generic; concrete antithesis is
+  human rhetoric and must not be flagged on density alone (esp. how-to / "avoid
+  these traps" genres). Surfaced by a smoke test on a contrast-heavy Evalgist
+  guide where the density rule would otherwise have over-fired.
 - 2026-06-26 — Initial KB. Distilled from Wikipedia:Signs of AI writing
   (WikiProject AI Cleanup). Part A summary of all signal families; Part B 22-rule
   ruleset with confidence gate, severities mapped to the suite model, the AI-vocab
