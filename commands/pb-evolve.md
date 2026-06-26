@@ -93,7 +93,7 @@ Default keyword → skill mapping:
 | hex literal, hardcoded color, hierarchy, hydration, a11y, AI-slop visual | `pb-design-review` |
 | missing test, swallowed error, race condition, off-by-one | `pb-review` |
 | broken import, stale spec, all-skipped | `pb-prune-tests` |
-| trope word, exclamation, emoji-in-copy, brand-tone | `pb-copy` |
+| trope word, AI-slop phrasing, exclamation, emoji-in-copy, brand-tone | `pb-copy` (AI-slop rules in `references/ai-writing-signals.md`) |
 | missing schema, semantic-term gap, thin content, keyword placement, E-E-A-T, AI-citability | `pb-pop` (rules in `references/seo-signals.md`) |
 | env drift, prod-only, leaked secret in example | `pb-env-check` |
 | PII, retention, ZDR, lawful basis | `pb-audit`, `pb-tdd` (strict bucket) |
