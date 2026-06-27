@@ -296,6 +296,19 @@ assert "pb-evolve can target pb-pop / seo-signals.md" "$?"
 grep -q '/pb-pop' README.md
 assert "README lists /pb-pop" "$?"
 
+# --- House review lens (references/house-review-lens.md) ---
+
+[ -f references/house-review-lens.md ]
+assert "references/house-review-lens.md knowledge base exists" "$?"
+
+grep -q 'Calibration' references/house-review-lens.md && grep -qE 'HR-01|HR-10' references/house-review-lens.md
+assert "house-review-lens.md has the HR ruleset + calibration" "$?"
+
+for s in pb-copy pb-design-review pb-pop; do
+  grep -q 'house-review-lens.md' "commands/$s.md"
+  assert "$s loads the house review lens" "$?"
+done
+
 # --- Summary ---
 
 echo
