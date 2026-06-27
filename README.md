@@ -22,6 +22,8 @@ banjul/
       bootstrap.sh   single entry point — sets $PB_SUITE, sourced by commands
       scope.sh       shared diff-scope detection for commands that read a diff
   references/        editable knowledge bases read by commands at runtime
+    ai-writing-signals.md  pb-copy AI-slop ruleset — tells, confidence gate, vocab list
+    house-review-lens.md   shared cold-target-user review lens for pb-copy/pb-design-review/pb-pop
     seo-signals.md   pb-pop scoring rules — weights, bands, schema catalog, sector strictness
   tests/             bash smoke tests for install mechanics and content invariants
   install            symlink commands/ into ~/.claude/commands/, install deps
