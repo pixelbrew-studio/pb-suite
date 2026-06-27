@@ -120,6 +120,10 @@ Apply the project's `CLAUDE.md` rules from step 2.
 - **Wrong language** — EN where project specifies NL (or mixed where one register is required) → IMPORTANT
 - **Missing required vocabulary** — project insists on a specific phrasing (e.g. "decision engine" not "AI tool") and the copy uses the wrong one → IMPORTANT
 
+### 5b. House reviewer lens
+
+After the AI-slop and brand-tone passes, load `$PB_SUITE/references/house-review-lens.md` (if present). When the copy is user-facing, apply its dislikes and positives (Parts A and B) and add any matching findings under a **House reviewer** heading in the report (suite severity model). Honour the Part D calibration: prefer rewrite / relabel / keep-and-explain over deleting when the lens points at a removal. A project may extend or override it with a `## House reviewer` block in `CLAUDE.md`.
+
 ### 6. Framework pass (one per surface)
 
 Apply ONE framework — the one that fits the surface. Frameworks are diagnostic, not templating.

@@ -79,6 +79,10 @@ over the KB defaults. Sector drives E-E-A-T strictness (legal / health / finance
 / local = strict baseline). If sector is undocumented, infer it from the page and
 state the assumption in the report.
 
+### 2b. House reviewer lens
+
+Load `$PB_SUITE/references/house-review-lens.md` (if present) and apply the parts that bear on page value: vanity / context-free aggregates (HR-01), escape routes / stranding (HR-04), and not-self-contained content (HR-09). Add matching findings under a **House reviewer** heading. Honour the Part D calibration. A project may extend or override it with a `## House reviewer` block in `CLAUDE.md`.
+
 ### 3. Competitor benchmark (default; skip with `--no-benchmark`)
 
 POP's defining trait — the score is relative, not absolute.

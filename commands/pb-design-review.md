@@ -116,6 +116,10 @@ Run in order. Stop early if a finding warrants discussion. Categories below cove
 - Variant or prop removed in code but the type still includes it
 - Old class names left next to new ones
 
+### 4b. House reviewer lens
+
+Load `$PB_SUITE/references/house-review-lens.md` (if present) and apply it to the UI change, especially: escape routes / stranding (HR-04), vanity or context-free aggregates (HR-01), mislabelled headings (HR-08), and not-self-contained sections (HR-09). Add matching findings under a **House reviewer** heading. Honour the Part D calibration (relabel or keep-and-explain over delete). A project may extend or override it with a `## House reviewer` block in `CLAUDE.md`.
+
 ### 5. Categorize and act
 
 - **BLOCKER** — accessibility violation, broken responsiveness, hardcoded color when tokens exist for that role, AI-slop forbidden by `CLAUDE.md`. Auto-fix only when the replacement is unambiguous (swap `<div onClick>` to `<button>`, add `alt=""` for a decorative icon, replace `#0066ff` with `--color-primary`, remove a `console.log`).
