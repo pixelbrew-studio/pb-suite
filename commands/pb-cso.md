@@ -83,7 +83,7 @@ Filter to high/critical with a known exploit path. A transitive CVE in a dev-onl
 
 Tailor to the detected stack. Skip categories that don't apply.
 
-- **A01 Broken Access Control** — every authenticated route enforces auth (middleware, decorator, or in-handler check)? Are user-id-bearing inputs verified against the session subject (no `req.body.userId` trust)? IDOR on REST collections (`/users/:id`)?
+- **A01 Broken Access Control** — every authenticated route enforces auth (middleware, decorator, or in-handler check)? Are user-id-bearing inputs verified against the session subject (no `req.body.userId` trust)? IDOR on REST collections (`/users/:id`)? Open-redirect and string-classifier validation — are redirect targets (`returnTo`/`next`), route classifiers (auth gates, PII/allowlist routers), and slug→path lookups checked against the canonical parser (resolve, compare `.origin`) or an anchored pattern, not hand-rolled prefix/substring checks that miss `/\evil` → off-origin, `/legalese` prefix-matching `/legal` without a `(?:\/|$)` boundary, or `..`/encoded path traversal? Test the adversarial near-miss, not the happy path.
 - **A02 Cryptographic Failures** — passwords hashed (bcrypt/argon2, not md5/sha1)? TLS enforced everywhere? Sensitive data at rest encrypted?
 - **A03 Injection** — SQL parameterized everywhere (no string concat into `query()`)? NoSQL operator injection (`$gt`, `$ne` from user input)? Command injection in shell calls? Template injection? LDAP/XPath/header injection where applicable?
 - **A04 Insecure Design** — rate limiting on auth and payment endpoints? Account-enumeration via login error messages or password-reset response timing? Idempotency on payment webhooks?

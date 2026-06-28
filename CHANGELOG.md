@@ -2,6 +2,10 @@
 
 Notable changes to pb-suite. Follows semver, written newest-first.
 
+## 0.7.1
+
+- `/pb-cso` A01 (Broken Access Control) now covers open-redirect and string-classifier validation: redirect targets (`returnTo`/`next`), route classifiers (auth gates, PII/allowlist routers), and slug→path lookups must be checked against the canonical parser (resolve, compare `.origin`) or an anchored pattern, not hand-rolled prefix/substring checks. Names the near-miss cases the check exists for: `/\evil` resolving off-origin, `/legalese` prefix-matching `/legal` without a `(?:\/|$)` boundary, and `..`/encoded path traversal. Sourced from `/pb-evolve` over the learning artifacts.
+
 ## 0.7.0
 
 - Add `references/house-review-lens.md` — a reusable "cold target-user" review lens the review skills load at runtime, seeded from a co-founder's pilot-user feedback on a real product. **Part A** is a 10-rule ruleset (HR-01…HR-10) for what such a reviewer flags: vanity / context-free aggregates, AI-slop, redundancy, escape-route/stranding links, non-existent-feature claims, misplaced compliance/pressure copy, confusing wording, mislabelled headings, not-self-contained sections, and single-source-of-truth breaks — each with suite severity and the expected move. **Part B** lists the positives to check for; **Part C** the review method; **Part D** a calibration guard (the reviewer is non-technical) so a skill never applies a fix blindly — prefer relabel / keep-and-explain / rewrite over deleting, never remove legally-required surfaces or deliberate positioning, verify accuracy claims, reframe infeasible asks. Per-project `## House reviewer` blocks in `CLAUDE.md` win on conflict.
