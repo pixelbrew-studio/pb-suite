@@ -1,8 +1,14 @@
 # pb-suite
 
-A hand-picked set of Claude Code slash commands for a solo-founder workflow. Each command is a single markdown file the LLM reads as instructions — there is no runtime, no telemetry, no multi-agent dispatch, no specialist personas. Just focused checks with a shared severity model and respect for per-project `CLAUDE.md`.
+A hand-picked command suite for disciplined AI-assisted product engineering.
+
+`pb-suite` is built for small teams and solo builders who want AI coding agents to move with sharper taste, stronger review habits, and less ritual. Each command is a single markdown file the LLM reads as instructions — there is no runtime, no telemetry, no multi-agent dispatch, no specialist personas. Just focused checks with a shared severity model and respect for per-project `CLAUDE.md`.
 
 Current version: see `VERSION`. Changes: see `CHANGELOG.md`.
+
+## Why this exists
+
+AI coding agents are fast enough to make bad process expensive. `pb-suite` keeps the workflow small and explicit: review the diff, investigate before fixing, verify runtime behavior, keep copy honest, check security before launch, and turn repeated lessons into better local rules.
 
 ## How it works
 
