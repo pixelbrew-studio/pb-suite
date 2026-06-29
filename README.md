@@ -2,6 +2,8 @@
 
 A hand-picked command suite for disciplined AI-assisted product engineering.
 
+[Built by Pixelbrew Studio](https://pixelbrew.studio/work/pb-suite) as part of its public workbench for small, inspectable AI-native tools.
+
 `pb-suite` is built for small teams and solo builders who want AI coding agents to move with sharper taste, stronger review habits, and less ritual. Each command is a single markdown file the LLM reads as instructions — there is no runtime, no telemetry, no multi-agent dispatch, no specialist personas. Just focused checks with a shared severity model and respect for per-project `CLAUDE.md`.
 
 Current version: see `VERSION`. Changes: see `CHANGELOG.md`.
@@ -201,3 +203,9 @@ Covers install/uninstall mechanics, `$PB_SUITE` resolution, presence of refuse-f
 ## Out of scope
 
 No multi-agent dispatch, no telemetry, no specialist personas, no pre-flight bash that mutates config state. If a future need requires heavier browser automation (anti-bot, headed mode, long-lived daemon), that becomes a deliberate addition under `scripts/` — not a meta-layer over an external tool.
+
+## Related Work
+
+- [Pixelbrew Studio](https://pixelbrew.studio) - independent AI-native product lab for small tools and public experiments.
+- [quote-locator](https://github.com/pixelbrew-studio/quote-locator) - TypeScript utility for locating claimed quotes inside source text.
+- [eval-metrics-ts](https://github.com/pixelbrew-studio/eval-metrics-ts) - dependency-light metrics for classification and ranking evaluations.
