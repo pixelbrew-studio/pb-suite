@@ -13,6 +13,12 @@ set -uo pipefail
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_DIR"
 
+# Isolate install/uninstall into a throwaway dir so running the tests never
+# repoints or removes the developer's live ~/.claude/commands symlinks.
+CLAUDE_COMMANDS_DIR="$(mktemp -d)"
+export CLAUDE_COMMANDS_DIR
+trap 'rm -rf "$CLAUDE_COMMANDS_DIR"' EXIT
+
 PASS=0
 FAIL=0
 FAILED_NAMES=()
@@ -39,43 +45,56 @@ echo "[install/uninstall/bootstrap]"
 INSTALL_EXIT=$?
 assert "install exits 0" "$INSTALL_EXIT"
 
-[ -L "$HOME/.claude/commands/pb-bootstrap.sh" ]
+[ -L "$CLAUDE_COMMANDS_DIR/pb-bootstrap.sh" ]
 assert "pb-bootstrap.sh symlink exists" "$?"
 
-[ "$(readlink "$HOME/.claude/commands/pb-bootstrap.sh")" = "$REPO_DIR/scripts/lib/bootstrap.sh" ]
+[ "$(readlink "$CLAUDE_COMMANDS_DIR/pb-bootstrap.sh")" = "$REPO_DIR/scripts/lib/bootstrap.sh" ]
 assert "pb-bootstrap.sh symlink resolves to repo bootstrap.sh" "$?"
 
-[ -L "$HOME/.claude/commands/pb.md" ]
+[ -L "$CLAUDE_COMMANDS_DIR/pb.md" ]
 assert "pb.md symlink exists" "$?"
 
-[ "$(readlink "$HOME/.claude/commands/pb.md")" = "$REPO_DIR/commands/pb.md" ]
+[ "$(readlink "$CLAUDE_COMMANDS_DIR/pb.md")" = "$REPO_DIR/commands/pb.md" ]
 assert "pb.md symlink resolves to repo command" "$?"
 
 # Item 2: source bootstrap, verify PB_SUITE
 ( unset PB_SUITE PB_SUITE_HOME
-  source "$HOME/.claude/commands/pb-bootstrap.sh"
+  source "$CLAUDE_COMMANDS_DIR/pb-bootstrap.sh"
   [ "$PB_SUITE" = "$REPO_DIR" ]
 )
 assert "bootstrap resolves PB_SUITE to repo root" "$?"
 
 # Item 3: PB_SUITE_HOME override
 ( unset PB_SUITE
-  PB_SUITE_HOME=/tmp source "$HOME/.claude/commands/pb-bootstrap.sh"
+  PB_SUITE_HOME=/tmp source "$CLAUDE_COMMANDS_DIR/pb-bootstrap.sh"
   [ "$PB_SUITE" = "/tmp" ]
 )
 assert "PB_SUITE_HOME=/tmp overrides PB_SUITE" "$?"
 
 # Item 4: uninstall then re-install (verifies bootstrap symlink is removed and recreated)
 ./uninstall >/tmp/pb-uninstall.log 2>&1
-[ ! -e "$HOME/.claude/commands/pb-bootstrap.sh" ]
+[ ! -e "$CLAUDE_COMMANDS_DIR/pb-bootstrap.sh" ]
 assert "uninstall removes pb-bootstrap.sh symlink" "$?"
 
-[ ! -e "$HOME/.claude/commands/pb.md" ]
+[ ! -e "$CLAUDE_COMMANDS_DIR/pb.md" ]
 assert "uninstall removes pb.md symlink" "$?"
 
 ./install >/tmp/pb-install-2.log 2>&1
-[ -L "$HOME/.claude/commands/pb-bootstrap.sh" ]
+[ -L "$CLAUDE_COMMANDS_DIR/pb-bootstrap.sh" ]
 assert "install re-creates pb-bootstrap.sh symlink" "$?"
+
+# Item 4b: a foreign symlink (points elsewhere) is backed up, not clobbered
+FOREIGN="$CLAUDE_COMMANDS_DIR/pb-review.md"
+rm -f "$FOREIGN"; ln -s /tmp "$FOREIGN"
+BACKUPS_BEFORE=$(find "$CLAUDE_COMMANDS_DIR" -maxdepth 1 -name 'pb-review.md.bak.*' -print | wc -l | tr -d ' ')
+./install >/tmp/pb-install-3.log 2>&1
+BACKUP_PATH=$(find "$CLAUDE_COMMANDS_DIR" -maxdepth 1 -name 'pb-review.md.bak.*' -print -quit)
+BACKUPS_AFTER=$(find "$CLAUDE_COMMANDS_DIR" -maxdepth 1 -name 'pb-review.md.bak.*' -print | wc -l | tr -d ' ')
+{ [ "$BACKUPS_BEFORE" = "0" ] \
+  && [ "$BACKUPS_AFTER" = "1" ] \
+  && [ "$(readlink "$BACKUP_PATH")" = "/tmp" ] \
+  && [ "$(readlink "$FOREIGN")" = "$REPO_DIR/commands/pb-review.md" ]; }
+assert "install backs up a foreign symlink instead of deleting it" "$?"
 
 # --- Section: converted skills source bootstrap ---
 
@@ -317,6 +336,15 @@ for s in pb-copy pb-design-review pb-pop; do
   grep -q 'house-review-lens.md' "commands/$s.md"
   assert "$s loads the house review lens" "$?"
 done
+
+# --- pb-qa response capture ---
+
+echo "[pb-qa]"
+
+# qa.ts must capture failed XHR/API/subresource responses via a real response
+# listener (the dedup comment assumes one); not just main-navigation status.
+grep -q 'page.on("response"' scripts/qa.ts
+assert "qa.ts has a network response listener" "$?"
 
 # --- Summary ---
 

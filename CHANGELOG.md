@@ -2,6 +2,13 @@
 
 Notable changes to pb-suite. Follows semver, written newest-first.
 
+## 0.8.0
+
+- Smoke tests no longer mutate the developer's live install: `./tests/smoke.sh` now installs/uninstalls into a throwaway `mktemp -d` (via `CLAUDE_COMMANDS_DIR`) and removes it on exit, so running the tests can never repoint or delete real `~/.claude/commands` symlinks. `scripts/lib/bootstrap.sh` self-locates via `BASH_SOURCE` instead of a hardcoded `$HOME` path, which keeps `PB_SUITE` resolution correct under that isolation (production behavior unchanged).
+- `install` now backs up a *foreign* symlink (one pointing outside this repo) to `<name>.bak.<stamp>` instead of silently deleting it, matching how it already backs up regular files. New smoke assertion covers it.
+- `/pb-qa` (`scripts/qa.ts`) now captures failed XHR/API/subresource responses through a real `page.on("response")` listener — previously only the main navigation status was recorded, and the dedup comment referenced a listener that did not exist. The redundant main-document block is removed (the listener covers it).
+- Add a CI workflow (`.github/workflows/ci.yml`) and a `test` script (`bun run test` → `./tests/smoke.sh`) so PRs run the verification gate automatically. CI skips the Chromium download via a new `PB_SKIP_PLAYWRIGHT_BROWSERS` guard in `install`.
+
 ## 0.7.1
 
 - `/pb-cso` A01 (Broken Access Control) now covers open-redirect and string-classifier validation: redirect targets (`returnTo`/`next`), route classifiers (auth gates, PII/allowlist routers), and slug→path lookups must be checked against the canonical parser (resolve, compare `.origin`) or an anchored pattern, not hand-rolled prefix/substring checks. Names the near-miss cases the check exists for: `/\evil` resolving off-origin, `/legalese` prefix-matching `/legal` without a `(?:\/|$)` boundary, and `..`/encoded path traversal. Sourced from `/pb-evolve` over the learning artifacts.
