@@ -31,7 +31,9 @@ for src in "$COMMANDS_DIR"/pb-*.md "$COMMANDS_DIR"/pb.md; do
       skipped=$((skipped + 1))
       continue
     fi
-    rm "$dst"
+    # Foreign symlink (points elsewhere) — back it up rather than clobber it.
+    mv "$dst" "$dst.bak.$stamp"
+    backed_up=$((backed_up + 1))
   elif [ -e "$dst" ]; then
     mv "$dst" "$dst.bak.$stamp"
     backed_up=$((backed_up + 1))
@@ -71,7 +73,8 @@ if [ -f "$REPO_DIR/package.json" ]; then
     (cd "$REPO_DIR" && bun install --silent)
   fi
 
-  if [ ! -d "$HOME/Library/Caches/ms-playwright/chromium-"* ] 2>/dev/null \
+  if [ -z "${PB_SKIP_PLAYWRIGHT_BROWSERS:-}" ] \
+    && [ ! -d "$HOME/Library/Caches/ms-playwright/chromium-"* ] 2>/dev/null \
     && [ ! -d "$HOME/.cache/ms-playwright/chromium-"* ] 2>/dev/null; then
     echo "pb-suite: installing Chromium for Playwright (~150MB, one-time)..."
     (cd "$REPO_DIR" && bunx playwright install chromium)
