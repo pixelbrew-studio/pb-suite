@@ -10,7 +10,7 @@ TARGET_DIR="${CLAUDE_COMMANDS_DIR:-$HOME/.claude/commands}"
 removed=0
 left_alone=0
 
-for src in "$COMMANDS_DIR"/pb-*.md; do
+for src in "$COMMANDS_DIR"/pb-*.md "$COMMANDS_DIR"/pb.md; do
   [ -f "$src" ] || continue
   name="$(basename "$src")"
   dst="$TARGET_DIR/$name"
