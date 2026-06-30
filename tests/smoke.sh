@@ -45,6 +45,12 @@ assert "pb-bootstrap.sh symlink exists" "$?"
 [ "$(readlink "$HOME/.claude/commands/pb-bootstrap.sh")" = "$REPO_DIR/scripts/lib/bootstrap.sh" ]
 assert "pb-bootstrap.sh symlink resolves to repo bootstrap.sh" "$?"
 
+[ -L "$HOME/.claude/commands/pb.md" ]
+assert "pb.md symlink exists" "$?"
+
+[ "$(readlink "$HOME/.claude/commands/pb.md")" = "$REPO_DIR/commands/pb.md" ]
+assert "pb.md symlink resolves to repo command" "$?"
+
 # Item 2: source bootstrap, verify PB_SUITE
 ( unset PB_SUITE PB_SUITE_HOME
   source "$HOME/.claude/commands/pb-bootstrap.sh"
@@ -63,6 +69,9 @@ assert "PB_SUITE_HOME=/tmp overrides PB_SUITE" "$?"
 ./uninstall >/tmp/pb-uninstall.log 2>&1
 [ ! -e "$HOME/.claude/commands/pb-bootstrap.sh" ]
 assert "uninstall removes pb-bootstrap.sh symlink" "$?"
+
+[ ! -e "$HOME/.claude/commands/pb.md" ]
+assert "uninstall removes pb.md symlink" "$?"
 
 ./install >/tmp/pb-install-2.log 2>&1
 [ -L "$HOME/.claude/commands/pb-bootstrap.sh" ]
