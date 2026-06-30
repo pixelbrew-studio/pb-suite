@@ -8,7 +8,7 @@ Notable changes to pb-suite. Follows semver, written newest-first.
 
 ## 0.7.0
 
-- Add `references/house-review-lens.md` — a reusable "cold target-user" review lens the review skills load at runtime, seeded from a co-founder's pilot-user feedback on a real product. **Part A** is a 10-rule ruleset (HR-01…HR-10) for what such a reviewer flags: vanity / context-free aggregates, AI-slop, redundancy, escape-route/stranding links, non-existent-feature claims, misplaced compliance/pressure copy, confusing wording, mislabelled headings, not-self-contained sections, and single-source-of-truth breaks — each with suite severity and the expected move. **Part B** lists the positives to check for; **Part C** the review method; **Part D** a calibration guard (the reviewer is non-technical) so a skill never applies a fix blindly — prefer relabel / keep-and-explain / rewrite over deleting, never remove legally-required surfaces or deliberate positioning, verify accuracy claims, reframe infeasible asks. Per-project `## House reviewer` blocks in `CLAUDE.md` win on conflict.
+- Add `references/house-review-lens.md` — a reusable "cold target-user" review lens the review skills load at runtime, seeded from anonymized pilot-user feedback on a real product. **Part A** is a 10-rule ruleset (HR-01…HR-10) for what such a reviewer flags: vanity / context-free aggregates, AI-slop, redundancy, escape-route/stranding links, non-existent-feature claims, misplaced compliance/pressure copy, confusing wording, mislabelled headings, not-self-contained sections, and single-source-of-truth breaks — each with suite severity and the expected move. **Part B** lists the positives to check for; **Part C** the review method; **Part D** a calibration guard (the reviewer is non-technical) so a skill never applies a fix blindly — prefer relabel / keep-and-explain / rewrite over deleting, never remove legally-required surfaces or deliberate positioning, verify accuracy claims, reframe infeasible asks. Per-project `## House reviewer` blocks in `CLAUDE.md` win on conflict.
 - `/pb-copy`, `/pb-design-review`, and `/pb-pop` now load the lens (when present) and add findings under a **House reviewer** axis — advisory, suite severity model, honouring the Part D calibration. New reference kept out of `commands/` so `install` never symlinks it as a slash command.
 
 ## 0.6.0
@@ -63,7 +63,7 @@ Notable changes to pb-suite. Follows semver, written newest-first.
 
 ## 0.1.3
 
-- `/pb-copy` monorepo-aware brand-tone discovery — reads `packages/*content-style*|*voice*|*tone*|*brand*|*copy*|*content*/CLAUDE.md` plus typed constants (`PREFERRED_WORDS`, `AVOIDED_WORDS`, `TONE`, `BRAND_PROMISE`, `PRODUCT_NAMING`). Picks up Acme's `@acme/content-style` package automatically. Per-app override when CWD is `apps/<name>/`.
+- `/pb-copy` monorepo-aware brand-tone discovery — reads `packages/*content-style*|*voice*|*tone*|*brand*|*copy*|*content*/CLAUDE.md` plus typed constants (`PREFERRED_WORDS`, `AVOIDED_WORDS`, `TONE`, `BRAND_PROMISE`, `PRODUCT_NAMING`). Picks up product-specific content-style packages automatically. Per-app override when CWD is `apps/<name>/`.
 
 ## 0.1.2
 

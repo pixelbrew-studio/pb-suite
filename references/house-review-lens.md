@@ -5,15 +5,15 @@ under a **"House reviewer"** axis: `pb-copy` (copy), `pb-design-review` (UI),
 `pb-pop` (page value). It is advisory, not a gate. Severities use the suite model
 (BLOCKER / IMPORTANT / NIT).
 
-It is **seeded from a co-founder's** pilot-user feedback on Acme
-Shortlist (June 2026) — a co-founder and the canonical *target user* (an episodic
-evaluator, no technical background). His reviews are high-signal about product
-copy, UX clarity, and "does this earn its place", and low-signal about technical
-feasibility. This file captures both, so a skill can apply the eye **and** know
-when to push back. The *patterns* generalize to any product; the named surfaces
-(Account page, the public marketing site, `/legal/*`) are examples. Per-project
-specifics still come from the project `CLAUDE.md` and content-style. Projects can
-extend or override this with a `## House reviewer` block in their `CLAUDE.md`.
+It is seeded from anonymized pilot-user feedback on a real product (June 2026).
+The reviewer is the canonical *target user*: episodic evaluator, no technical
+background. The feedback is high-signal about product copy, UX clarity, and
+"does this earn its place", and low-signal about technical feasibility. This file
+captures both, so a skill can apply the eye **and** know when to push back. The
+*patterns* generalize to any product; surfaces such as account pages, public
+marketing pages, and `/legal/*` are examples. Per-project specifics still come
+from the project `CLAUDE.md` and content-style. Projects can extend or override
+this with a `## House reviewer` block in their `CLAUDE.md`.
 
 ---
 
@@ -70,5 +70,5 @@ The throughline: **the reviewer is usually right about the symptom (this confuse
 
 ## Changelog
 
-- 2026-06-27 — Initial lens. Distilled from ~14 pilot-user review tasks on Acme
-  Shortlist (entry page, account/settings, dashboard, credits, review surfaces).
+- 2026-06-27 — Initial lens. Distilled from ~14 anonymized pilot-user review
+  tasks covering entry, account/settings, dashboard, credits, and review surfaces.

@@ -57,7 +57,7 @@ AI answer-engines cite a *passage*, not a page. Score each section in
 `pop.ts`'s `sections[]` (heading → its opening paragraph):
 
 - **Answer-first** — the opener states the answer directly in the first
-  sentence, not after a wind-up. "Acme scores candidates on evidence from
+  sentence, not after a wind-up. "The product scores candidates on evidence from
   their work, not keyword-matched CVs." beats "When it comes to hiring, there are
   many things to consider…".
 - **Self-contained** — the sentence stands alone without the heading or prior

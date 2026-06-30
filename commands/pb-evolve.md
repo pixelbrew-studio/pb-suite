@@ -130,8 +130,8 @@ Window: --since=<N>d  Scope: <local | global>
 [strong signal: n>=5]
   candidate-1: pb-cso  step 6, after "A05 Security Misconfiguration"
     add: "Webhook idempotency key logged unredacted in error path" (n=6)
-    sample: 2026-04-12 (Sendays) — "stripe webhook handler dumped event.id into breadcrumb"
-            2026-05-02 (Acme) — "auth replay-token leaked in 500 response body"
+    sample: 2026-04-12 (Project A) — "stripe webhook handler dumped event.id into breadcrumb"
+            2026-05-02 (Project B) — "auth replay-token leaked in 500 response body"
             ...
 
 [medium signal: n=3-4]

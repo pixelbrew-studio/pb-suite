@@ -29,4 +29,4 @@ Out of scope:
 
 - findings caused by downstream project instructions
 - model behavior that ignores the command text
-- requests involving Acme private systems or company-owned assets
+- requests involving private downstream systems or company-owned assets
