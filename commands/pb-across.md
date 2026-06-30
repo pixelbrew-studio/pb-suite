@@ -1,5 +1,5 @@
 ---
-description: Run a shell command or pb- command across every project in Active/. Cross-portfolio dashboard substitute for the solo founder. Walks one level deep to catch nested repos like Salmon Rushhour/repo.
+description: Run a shell command or pb- command across every project in Active/. Cross-portfolio dashboard substitute for the solo founder. Walks one level deep to catch nested repos like Group/repo.
 allowed-tools: [Bash, Read]
 argument-hint: "<command>  [--in <dir>] [--filter <glob>] [--parallel] [--summary]"
 ---
@@ -94,7 +94,7 @@ Exit `1` if any project's command exited non-zero, else `0`.
 - `/pb-across "git fetch && git rev-list --count HEAD..@{u} 2>/dev/null"` — unpushed/unsynced per repo
 - `/pb-across "git log -1 --format='%ar %s'" --summary` — last commit per repo, one line each
 - `/pb-across "bun test"` — run tests across all (slow; consider `--parallel`)
-- `/pb-across pb-resume --filter "Sendays|Sentinel"` — resume two repos (once `pb-resume` is installed)
+- `/pb-across pb-resume --filter "ProjectA|ProjectB"` — resume two repos (once `pb-resume` is installed)
 - `/pb-across "vercel ls --yes 2>/dev/null | head -5"` — Vercel state per project that's linked
 
 ## Out of scope (v1)
