@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# Remove only pb-suite Codex skill symlinks. Leaves other skills untouched.
+
+set -euo pipefail
+
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SOURCE_DIR="$REPO_DIR/codex-skills"
+CODEX_HOME="${CODEX_HOME:-$HOME/.codex}"
+TARGET_DIR="${CODEX_SKILLS_DIR:-$CODEX_HOME/skills}"
+
+removed=0
+left_alone=0
+
+for src in "$SOURCE_DIR"/*; do
+  [ -f "$src/SKILL.md" ] || continue
+
+  name="$(basename "$src")"
+  dst="$TARGET_DIR/$name"
+
+  if [ -L "$dst" ] && [ "$(readlink "$dst")" = "$src" ]; then
+    rm "$dst"
+    removed=$((removed + 1))
+  elif [ -e "$dst" ] || [ -L "$dst" ]; then
+    left_alone=$((left_alone + 1))
+  fi
+done
+
+BOOTSTRAP_SRC="$REPO_DIR/scripts/lib/bootstrap-codex.sh"
+BOOTSTRAP_DST="$TARGET_DIR/pb-bootstrap.sh"
+if [ -L "$BOOTSTRAP_DST" ] && [ "$(readlink "$BOOTSTRAP_DST")" = "$BOOTSTRAP_SRC" ]; then
+  rm "$BOOTSTRAP_DST"
+  removed=$((removed + 1))
+elif [ -e "$BOOTSTRAP_DST" ] || [ -L "$BOOTSTRAP_DST" ]; then
+  left_alone=$((left_alone + 1))
+fi
+
+echo "pb-suite Codex: removed=$removed left_alone=$left_alone target=$TARGET_DIR"
+[ "$left_alone" -gt 0 ] && echo "  (regular files or foreign symlinks were not touched)"
