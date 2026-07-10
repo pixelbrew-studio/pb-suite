@@ -1,0 +1,6 @@
+interface:
+  display_name: "pb-design-review"
+  short_description: "Pre-merge UI design audit"
+  default_prompt: "Use $pb-design-review to audit the current UI diff before merge."
+policy:
+  allow_implicit_invocation: true

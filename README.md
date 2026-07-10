@@ -57,6 +57,32 @@ What it does:
 
 First run takes ~30s for the Chromium download. Subsequent runs are instant.
 
+### Codex skills
+
+Codex skills use a different format from Claude Code slash commands. The
+Codex-native ports live in `codex-skills/<name>/SKILL.md`. Install them as
+symlinks with:
+
+```bash
+./install-codex
+```
+
+The installer links each complete skill directory into `~/.codex/skills/`.
+Editing a source `SKILL.md` therefore changes the installed skill immediately
+on disk. Start a fresh Codex agent or session after an edit so it reloads the
+skill instructions. `./uninstall-codex` removes only symlinks that point back
+to this repository.
+
+Use `CODEX_HOME` to select a different Codex home directory, or
+`CODEX_SKILLS_DIR` to select the exact target directory.
+
+Every pb-suite command has a Codex skill adapter. The adapter reads the
+matching canonical source in `commands/` at execution time, so command-source
+updates apply to new Codex sessions without re-porting the procedure. The
+adapter explains the small differences in tool naming, arguments, and nested
+skill calls. `pb-design-review` additionally has a Codex-specific detailed
+review layer.
+
 Custom install location:
 
 ```bash
@@ -76,6 +102,11 @@ Only touches symlinks pointing back into this repo — foreign symlinks and regu
 Edit the source files in `commands/`. The symlinks in `~/.claude/commands/` point directly at these files, so every change is live in the next command session immediately — no re-install needed.
 
 To add a new command, drop `commands/pb-<name>.md` and run `./install` to symlink it.
+
+To add a Codex port, create `codex-skills/pb-<name>/SKILL.md` with Codex skill
+frontmatter and run `./install-codex`. A Claude command is not automatically a
+Codex skill: port its instructions deliberately, including any tool-specific
+steps and references to other slash commands.
 
 ### File conventions
 

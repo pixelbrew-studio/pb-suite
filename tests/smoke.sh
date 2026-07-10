@@ -17,7 +17,9 @@ cd "$REPO_DIR"
 # repoints or removes the developer's live ~/.claude/commands symlinks.
 CLAUDE_COMMANDS_DIR="$(mktemp -d)"
 export CLAUDE_COMMANDS_DIR
-trap 'rm -rf "$CLAUDE_COMMANDS_DIR"' EXIT
+CODEX_SKILLS_DIR="$(mktemp -d)"
+export CODEX_SKILLS_DIR
+trap 'rm -rf "$CLAUDE_COMMANDS_DIR" "$CODEX_SKILLS_DIR"' EXIT
 
 PASS=0
 FAIL=0
@@ -95,6 +97,50 @@ BACKUPS_AFTER=$(find "$CLAUDE_COMMANDS_DIR" -maxdepth 1 -name 'pb-review.md.bak.
   && [ "$(readlink "$BACKUP_PATH")" = "/tmp" ] \
   && [ "$(readlink "$FOREIGN")" = "$REPO_DIR/commands/pb-review.md" ]; }
 assert "install backs up a foreign symlink instead of deleting it" "$?"
+
+# --- Section: Codex skills install / bootstrap ---
+
+echo "[Codex skills]"
+
+./install-codex >/tmp/pb-install-codex.log 2>&1
+assert "install-codex exits 0" "$?"
+
+[ -L "$CODEX_SKILLS_DIR/pb-bootstrap.sh" ]
+assert "Codex pb-bootstrap.sh symlink exists" "$?"
+
+[ "$(readlink "$CODEX_SKILLS_DIR/pb-bootstrap.sh")" = "$REPO_DIR/scripts/lib/bootstrap-codex.sh" ]
+assert "Codex bootstrap symlink resolves to repo bootstrap-codex.sh" "$?"
+
+(
+  unset PB_SUITE PB_SUITE_HOME
+  source "$CODEX_SKILLS_DIR/pb-bootstrap.sh"
+  [ "$PB_SUITE" = "$REPO_DIR" ]
+)
+assert "Codex bootstrap resolves PB_SUITE to repo root" "$?"
+
+(
+  unset PB_SUITE
+  PB_SUITE_HOME=/tmp source "$CODEX_SKILLS_DIR/pb-bootstrap.sh"
+  [ "$PB_SUITE" = "/tmp" ]
+)
+assert "Codex PB_SUITE_HOME=/tmp overrides PB_SUITE" "$?"
+
+COMMAND_COUNT=$(find commands -maxdepth 1 -type f -name 'pb*.md' | wc -l | tr -d ' ')
+SKILL_COUNT=$(find codex-skills -mindepth 2 -maxdepth 2 -name SKILL.md | wc -l | tr -d ' ')
+[ "$COMMAND_COUNT" = "$SKILL_COUNT" ]
+assert "every canonical command has a Codex skill" "$?"
+
+for command in commands/pb*.md; do
+  name="$(basename "$command" .md)"
+  [ -f "codex-skills/$name/SKILL.md" ]
+  assert "Codex source exists for $name" "$?"
+  grep -q "^name: $name$" "codex-skills/$name/SKILL.md"
+  assert "Codex source names $name" "$?"
+  grep -q 'source "\$HOME/.codex/skills/pb-bootstrap.sh"' "codex-skills/$name/SKILL.md"
+  assert "Codex source bootstraps $name" "$?"
+  [ -L "$CODEX_SKILLS_DIR/$name" ] && [ "$(readlink "$CODEX_SKILLS_DIR/$name")" = "$REPO_DIR/codex-skills/$name" ]
+  assert "Codex installation links $name" "$?"
+done
 
 # --- Section: converted skills source bootstrap ---
 
