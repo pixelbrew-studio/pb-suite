@@ -6,7 +6,7 @@ argument-hint: "[url]  optional dev-server URL for live screenshot pass + struct
 
 # pb-design-review
 
-One comprehensive UI review pass for pre-merge. Bundles three things Karel used to run separately: the gstack design-review (now uninstalled), the `art-director` structured critique, and the `ux-design` Refactoring UI principles. Same severity model as the rest of pb-suite: BLOCKER auto-fixes when obvious, IMPORTANT asks first, NIT mentions only.
+One comprehensive UI review pass for pre-merge. Bundles structured critique, Refactoring UI principles, and the suite severity model. Same severity model as the rest of pb-suite: BLOCKER auto-fixes when obvious, IMPORTANT asks first, NIT mentions only.
 
 If a URL is given as the argument, the command also opens the live page and runs an art-direction critique on top of the checklist pass — no separate hand-off step.
 
@@ -37,7 +37,7 @@ Before applying any rule, infer the project's conventions:
 - **Color tokens** — `--color-*` CSS vars, Tailwind theme, or hex literals? Is the grey scale neutral or tinted (gray-with-hue)?
 - **Component primitives** — shadcn, custom, MUI, etc.?
 - **Existing patterns** for the kind of element you're reviewing (a button, a card, a form).
-- **Brand discipline** — accent-color restrictions, font blacklist, motion budget (Sendays' DESIGN.md is the canonical example).
+- **Brand discipline** — accent-color restrictions, font blacklist, motion budget, and any canonical design docs.
 
 ### 3. Read the visual diff
 
@@ -49,7 +49,7 @@ Hold the intent: new component, restyle, refactor of existing UI, new page, or t
 
 ### 4. Focused checks
 
-Run in order. Stop early if a finding warrants discussion. Categories below cover the Refactoring UI principles (hierarchy, spacing, typography, color, depth, forms, states), accessibility, and the AI-slop patterns Karel has flagged before.
+Run in order. Stop early if a finding warrants discussion. Categories below cover the Refactoring UI principles (hierarchy, spacing, typography, color, depth, forms, states), accessibility, and recurring AI-slop patterns.
 
 **Accessibility (BLOCKER if violated)**
 - Interactive element on a non-semantic tag (`div onClick`, no `role`)

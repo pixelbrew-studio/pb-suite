@@ -56,7 +56,7 @@ Extract URL from `$ARGUMENTS` if present (strip any flags first). URL triggers t
 
 ### 2. Run pb-review (always)
 
-Execute the steps from `pb-review.md` against the diff. Capture: BLOCKER, IMPORTANT, NIT counts and the per-finding detail. Do not auto-fix here — `/pb-check` is read-only, fixes happen when Karel runs `/pb-review` directly or `/pb-ship`.
+Execute the steps from `pb-review.md` against the diff. Capture: BLOCKER, IMPORTANT, NIT counts and the per-finding detail. Do not auto-fix here — `/pb-check` is read-only, fixes happen when the user runs `/pb-review` directly or `/pb-ship`.
 
 ### 3. Run pb-design-review (only if UI files changed)
 

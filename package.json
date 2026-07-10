@@ -2,9 +2,11 @@
   "name": "pb-suite",
   "private": true,
   "type": "module",
-  "description": "Pixelbrew Claude Code commands — local scripts for pb-browse and future tools",
+  "description": "Pixelbrew command suite for disciplined AI-assisted product engineering.",
+  "license": "MIT",
   "scripts": {
-    "browse": "bun scripts/browse.ts"
+    "browse": "bun scripts/browse.ts",
+    "test": "./tests/smoke.sh"
   },
   "dependencies": {
     "playwright": "^1.55.0",

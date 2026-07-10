@@ -1,18 +1,26 @@
 # pb-suite
 
-A hand-picked set of Claude Code slash commands for a solo-founder workflow. Each command is a single markdown file the LLM reads as instructions — there is no runtime, no telemetry, no multi-agent dispatch, no specialist personas. Just focused checks with a shared severity model and respect for per-project `CLAUDE.md`.
+A hand-picked command suite for disciplined AI-assisted product engineering.
+
+[Built by Pixelbrew Studio](https://pixelbrew.studio/work/pb-suite) as part of its public workbench for small, inspectable tools.
+
+`pb-suite` is built for small teams and solo builders who want AI-assisted coding to move with sharper taste, stronger review habits, and less ritual. Each command is a single markdown file read as instructions; there is no resident runtime, telemetry, background dispatcher, or hidden persona layer. Just focused checks with a shared severity model and respect for per-project `CLAUDE.md`.
 
 Current version: see `VERSION`. Changes: see `CHANGELOG.md`.
 
+## Why this exists
+
+AI-assisted coding is fast enough to make bad process expensive. `pb-suite` keeps the workflow small and explicit: review the diff, investigate before fixing, verify runtime behavior, keep copy honest, check security before launch, and turn repeated lessons into better local rules.
+
 ## How it works
 
-Claude Code reads slash commands from `~/.claude/commands/*.md`. `./install` symlinks every file in this repo's `commands/` directory into that folder, so editing a source file here takes effect immediately — no rebuild, no reload.
+The slash-command runner reads command files from `~/.claude/commands/*.md`. `./install` symlinks this repo's command files into that folder, so editing a source file here takes effect immediately — no rebuild, no reload.
 
-Each command file has YAML frontmatter (`description`, `allowed-tools`, optional `argument-hint`) followed by markdown sections the LLM follows step-by-step. A few commands shell out to small Bun + Playwright scripts in `scripts/` (`pb-browse`, `pb-qa`, `pb-prune-tests`) for things an LLM cannot do directly — fetching pages, running headless browsers, parsing test files.
+Each command file has YAML frontmatter (`description`, `allowed-tools`, optional `argument-hint`) followed by markdown sections executed step-by-step. A few commands shell out to small Bun + Playwright scripts in `scripts/` (`pb-browse`, `pb-qa`, `pb-pop`, `pb-prune-tests`) for deterministic browser and file-system work.
 
 ```
-banjul/
-  commands/          source markdown — one file per /pb-* command
+pb-suite/
+  commands/          source markdown — one file per command
   scripts/
     browse.ts        pb-browse: URL → markdown via Playwright + Turndown
     qa.ts            pb-qa: visit routes, capture console/network errors, screenshots
@@ -20,6 +28,7 @@ banjul/
     pop.ts           pb-pop: URL/file → SEO signals (schema, headings, meta, structure)
     lib/
       bootstrap.sh   single entry point — sets $PB_SUITE, sourced by commands
+      cil.sh         opt-in CIL helpers, no-op outside CIL repos
       scope.sh       shared diff-scope detection for commands that read a diff
   references/        editable knowledge bases read by commands at runtime
     ai-writing-signals.md  pb-copy AI-slop ruleset — tells, confidence gate, vocab list
@@ -28,6 +37,7 @@ banjul/
   tests/             bash smoke tests for install mechanics and content invariants
   install            symlink commands/ into ~/.claude/commands/, install deps
   uninstall          remove only symlinks that point back to this repo
+  package.json       Bun dependencies for the helper scripts
   VERSION            semver string
   CHANGELOG.md       newest-first version history
 ```
@@ -40,10 +50,10 @@ banjul/
 
 What it does:
 
-1. Symlinks `commands/pb-*.md` into `~/.claude/commands/` (idempotent; backs up pre-existing regular files as `<name>.bak.<timestamp>`).
+1. Symlinks `commands/pb-*.md` and `commands/pb.md` into `~/.claude/commands/` (idempotent; backs up pre-existing regular files as `<name>.bak.<timestamp>`).
 2. Symlinks `scripts/lib/bootstrap.sh` to `~/.claude/commands/pb-bootstrap.sh` so commands can resolve `$PB_SUITE` with a single `source` line.
-3. Runs `bun install` if `node_modules/` is missing (required for `pb-browse`, `pb-qa`).
-4. Runs `bunx playwright install chromium` if the Chromium bundle is missing (~150MB, one-time).
+3. Runs `bun install` if `node_modules/` is missing (required by the Bun helper scripts).
+4. Runs `bunx playwright install chromium` if the Chromium bundle is missing (~150MB, one-time; used by browser-backed helpers such as `pb-browse`, `pb-qa`, and `pb-pop`).
 
 First run takes ~30s for the Chromium download. Subsequent runs are instant.
 
@@ -89,7 +99,7 @@ Only touches symlinks pointing back into this repo — foreign symlinks and regu
 
 ## Editing and extending
 
-Edit the source files in `commands/`. The symlinks in `~/.claude/commands/` point directly at these files, so every change is live in the next Claude Code session immediately — no re-install needed.
+Edit the source files in `commands/`. The symlinks in `~/.claude/commands/` point directly at these files, so every change is live in the next command session immediately — no re-install needed.
 
 To add a new command, drop `commands/pb-<name>.md` and run `./install` to symlink it.
 
@@ -110,7 +120,7 @@ steps and references to other slash commands.
 
 ## Commands
 
-Two-letter mnemonic for the cluster, then a one-line summary. Full instructions live in the corresponding `commands/pb-<name>.md` file.
+Commands are grouped by workflow area. Full instructions live in the corresponding file under `commands/`.
 
 **Reviewing and shipping**
 
@@ -123,7 +133,7 @@ Two-letter mnemonic for the cluster, then a one-line summary. Full instructions 
 | `/pb-pop` | PageOptimizer-Pro-style SEO / AI-citability audit. Scores a page 0-100 (keyword placement, schema, semantic terms, structure, internal links, depth, E-E-A-T) benchmarked against the pages ranking for the target query. Report-only — schema gaps emit paste-ready JSON-LD, prose gaps hand off to `/pb-copy`. `--blueprint` specs a new page; `--no-benchmark` for absolute scoring. Rules live in `references/seo-signals.md`. |
 | `/pb-check` | Single-call orchestrator: runs pb-review + pb-design-review (if UI) + pb-cso `--diff` + pb-qa (if URL given), aggregates findings, surfaces cross-PR patterns. Audit only — no merge, no test runs. |
 | `/pb-ship` | Pre-merge gate: pb-review + `e2e-from-pr` verify, classifies each new spec (`persist` / `revert` / `ask`), ship/wait/decide prompt. Never auto-merges. Refuses `--no-verify`, `--no-gpg-sign`, `--force`. |
-| `/pb-pr` | Drafts a PR description from the branch diff. Reads `CLAUDE.md` for tone, fills `.github/pull_request_template.md` if present. User picks open / draft / revise / copy / cancel. Pass `--prepare` to write the draft to `.context/pr-draft.md` + clipboard instead of calling `gh` — for Conductor's Create PR button or any non-`gh` flow. |
+| `/pb-pr` | Drafts a PR description from the branch diff. Reads `CLAUDE.md` for tone, fills `.github/pull_request_template.md` if present. User picks open / draft / revise / copy / cancel. Pass `--prepare` to write the draft to `.context/pr-draft.md` + clipboard instead of opening a PR directly. |
 
 **Investigating and auditing**
 
@@ -132,15 +142,15 @@ Two-letter mnemonic for the cluster, then a one-line summary. Full instructions 
 | `/pb-investigate` | Root-cause debugging. Iron law: no fix without reproduction and hypothesis. Three failed fixes triggers a step back. Optionally appends a one-liner to `.claude/incidents.md`. |
 | `/pb-audit` | Adversarial read-only audit of existing stable code (no diff). Behavior inventory + coverage map + testability + OWASP + GDPR + defect register. Modes: A (audit) / B (audit + characterization plan) / C (inventory backfill). |
 | `/pb-qa` | Runtime QA — visits routes via headless Chromium, captures console errors, 5xx responses, broken images. Per-route screenshots. Read-only. |
-| `/pb-browse` | Fetch a URL via headless Chromium, return clean markdown via Turndown. Self-contained — no MCP, no WebFetch dependency. Optional screenshot. |
-| `/pb-env-check` | Diff `.env.example` vs local env files vs Vercel env (per environment). Flags missing, undocumented, prod-only, leaked. Keys only — never prints values. |
+| `/pb-browse` | Fetch a URL via headless Chromium, return clean markdown via Turndown. Self-contained — no external fetch connector required. Optional screenshot. |
+| `/pb-env-check` | Diff `.env.example` vs local env files vs hosted environment keys. Flags missing, undocumented, prod-only, leaked. Keys only — never prints values. |
 | `/pb-prune-tests` | Audit the test suite for likely-obsolete specs: broken imports, all-skipped files, references to long-merged PRs. Report only — no deletions without explicit approval. |
 
 **Development discipline**
 
 | Command | Purpose |
 |---|---|
-| `/pb-implement` | Spec-first feature implementation — the orchestration layer that drives the rest of the suite. Builds a written spec (interviews via `AskUserQuestion` when context is thin), declares a verification plan *before* coding that **routes specialist reviews by what the change touches** (`/pb-cso --diff`, `/pb-design-review`, `/pb-copy`, `/pb-env-check` via the `CLAUDE.md` trigger table), gates strict-bucket work behind explicit human approval, then drives every slice through `/pb-tdd`'s RED→GREEN→REFACTOR loop with one sub-agent per slice (parallel waves; stuck slices escalate to `/pb-investigate`). Reviews with `/pb-check` breadth plus an independent cross-model Codex pass, feeds recurring patterns to `.claude/lessons.md` / `.claude/incidents.md` (→ `/pb-evolve`), hands off to `/pb-pr`, and proposes capturing repeatable work as a skill. `--spec <file>` / `--interview` / `--plan-only` / `--no-parallel`. |
+| `/pb-implement` | Spec-first feature implementation — the orchestration layer that drives the rest of the suite. Builds a written spec, prompts when context is thin, declares a verification plan *before* coding, routes specialist reviews by what the change touches (`/pb-cso --diff`, `/pb-design-review`, `/pb-copy`, `/pb-env-check` via the `CLAUDE.md` trigger table), gates strict-bucket work behind explicit human approval, then drives every slice through `/pb-tdd`'s RED→GREEN→REFACTOR loop in parallel waves when safe. Stuck slices escalate to `/pb-investigate`; review uses `/pb-check` plus an independent second pass; recurring patterns feed `.claude/lessons.md` / `.claude/incidents.md` (→ `/pb-evolve`). `--spec <file>` / `--interview` / `--plan-only` / `--no-parallel`. |
 | `/pb-tdd` | Test-first workflow. Greenfield (RED→GREEN→REFACTOR) or brownfield (CHARACTERIZE→RED→GREEN→REFACTOR), auto-detected. Risk buckets — strict for money/privacy/auth/AI/retention/evaluation, light for routine CRUD, skip for docs. One vertical slice per call. `--auto` infers the slice from working tree + branch + recent commits. |
 
 **Suite management and cross-project**
@@ -158,13 +168,13 @@ Two-letter mnemonic for the cluster, then a one-line summary. Full instructions 
 
 When a repo has a top-level `CIL/sources.md`, some pb-* commands automatically enable a CIL bridge:
 
-- `/pb-resume` — adds Linear (assigned, In Progress + Todo) and recent Notion specs. `--no-cil` to suppress.
-- `/pb-pr` — extracts a tracker key from the branch name (e.g. `EVA-198-foo`), seeds the summary from the Linear ticket, appends `Closes <KEY>`.
-- `/pb-ship` — the gate splits into ship / wait / defer / decide. `defer` opens a Linear follow-up; `decide` stays for genuinely strategic choices (cil-decide enforcement). Exit-readiness forced-read prompt on external-surface / load-bearing / legal / billing / auth diffs.
+- `/pb-resume` — adds assigned tracker items and recent specs. `--no-cil` to suppress.
+- `/pb-pr` — extracts a tracker key from the branch name (e.g. `EVA-198-foo`), seeds the summary from the matching ticket, appends `Closes <KEY>`.
+- `/pb-ship` — the gate splits into ship / wait / defer / decide. `defer` opens a follow-up ticket when supported; `decide` stays for genuinely strategic choices (cil-decide enforcement). Exit-readiness forced-read prompt on external-surface / load-bearing / legal / billing / auth diffs.
 - `/pb-cso` — canonical-narrative check: when `CLAUDE.md` declares a narrative (e.g. privacy-first) and the diff adds external-surface copy, flags a missing concrete claim (IMPORTANT) or contradictory copy (BLOCKER).
 - `/pb-evolve --cil` — reads `CIL/improvements/*.md` and `CIL/incidents.md` in addition to the `.claude/*.md` artifacts.
 
-Outside a CIL repo all of the above no-op. No MCP requirement — if the Linear/Notion MCP is not connected, the bridge drops silently and the command continues.
+Outside a CIL repo all of the above no-op. No external connector is required; if tracker/spec context is unavailable, the bridge drops silently and the command continues.
 
 ## Shared mechanics
 
@@ -204,14 +214,14 @@ Default mode requires a clean working tree (the selective revert assumes all cha
 
 These files are per-project opt-in (created by `/pb-init` or by the user), gitignored by convention, and never leave the project. There is no central telemetry.
 
-## Notes for agents
+## Notes for maintainers
 
-If you are an LLM agent working in this repo:
+If you are editing this repo:
 
 - **Don't invent commands.** The slash-command list in this README is the full set. If a workflow needs something missing, it's a feature request, not a runtime detail.
 - **Source the canonical workflow rules from `/pb-rules`**, not from this README. The injected Workflow block in a downstream project's `CLAUDE.md` is the contract — this README is documentation.
 - **Editing a command? Match the existing conventions** (frontmatter, ~70 lines, numbered steps, severity tiers, scope-detection via `scope.sh`). Don't introduce new severity levels or new orchestration patterns without discussing first.
-- **Test changes** with `./tests/smoke.sh` after editing. The smoke tests cover install/uninstall mechanics and content invariants on the skill files — they don't (and can't) cover what the LLM does with the markdown.
+- **Test changes** with `./tests/smoke.sh` after editing. The smoke tests cover install/uninstall mechanics and content invariants on the command files — they don't cover subjective command interpretation.
 - **`$PB_SUITE`** inside a command resolves via `source ~/.claude/commands/pb-bootstrap.sh`. Honor `PB_SUITE_HOME` if set (testing, non-standard installs).
 - **Refusal flags are non-negotiable.** `/pb-ship`, `/pb-pr`, and any merge-adjacent command refuse `--no-verify`, `--no-gpg-sign`, `--force`, `-f`. Do not soften these.
 
@@ -225,4 +235,10 @@ Covers install/uninstall mechanics, `$PB_SUITE` resolution, presence of refuse-f
 
 ## Out of scope
 
-No multi-agent dispatch, no telemetry, no specialist personas, no pre-flight bash that mutates config state. If a future need requires heavier browser automation (anti-bot, headed mode, long-lived daemon), that becomes a deliberate addition under `scripts/` — not a meta-layer over an external tool.
+No telemetry, no hidden background service, no pre-flight bash that mutates config state. If a future need requires heavier browser automation (anti-bot, headed mode, long-lived daemon), that becomes a deliberate addition under `scripts/` — not a meta-layer over an external tool.
+
+## Related Work
+
+- [Pixelbrew Studio](https://pixelbrew.studio) - independent product lab for small tools and public experiments.
+- [quote-locator](https://github.com/pixelbrew-studio/quote-locator) - TypeScript utility for locating claimed quotes inside source text.
+- [eval-metrics-ts](https://github.com/pixelbrew-studio/eval-metrics-ts) - dependency-light metrics for classification and ranking evaluations.

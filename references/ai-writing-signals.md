@@ -259,12 +259,12 @@ Projects may extend or override this list in `CLAUDE.md`. A documented brand wor
 - 2026-06-26 — AIW-10: mirror the empty-vs-concrete discriminator onto rule of
   three. Only interchangeable filler triads are a tell; triads with distinct
   concrete members (escalating definitions, anaphora) are deliberate rhetoric.
-  Surfaced across three Evalgist blog/guide pages whose signature voice uses
+  Surfaced across three product blog/guide pages whose signature voice uses
   concrete triads the count-based rule would over-fire on.
 - 2026-06-26 — AIW-09: add empty-vs-concrete discriminator. Negative parallelism
   is a tell only when the affirmative half is generic; concrete antithesis is
   human rhetoric and must not be flagged on density alone (esp. how-to / "avoid
-  these traps" genres). Surfaced by a smoke test on a contrast-heavy Evalgist
+  these traps" genres). Surfaced by a smoke test on a contrast-heavy product
   guide where the density rule would otherwise have over-fired.
 - 2026-06-26 — Initial KB. Distilled from Wikipedia:Signs of AI writing
   (WikiProject AI Cleanup). Part A summary of all signal families; Part B 22-rule
