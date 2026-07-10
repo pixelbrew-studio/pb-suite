@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+# Install Codex-native pb-suite skills as symlinks pointing to this repository.
+# Idempotent. Existing files or directories are backed up with a timestamp.
+
+set -euo pipefail
+
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SOURCE_DIR="$REPO_DIR/codex-skills"
+CODEX_HOME="${CODEX_HOME:-$HOME/.codex}"
+TARGET_DIR="${CODEX_SKILLS_DIR:-$CODEX_HOME/skills}"
+
+if [ ! -d "$SOURCE_DIR" ]; then
+  echo "error: $SOURCE_DIR not found" >&2
+  exit 1
+fi
+
+mkdir -p "$TARGET_DIR"
+
+stamp="$(date +%Y%m%d%H%M%S)"
+linked=0
+skipped=0
+backed_up=0
+
+for src in "$SOURCE_DIR"/*; do
+  [ -f "$src/SKILL.md" ] || continue
+
+  name="$(basename "$src")"
+  dst="$TARGET_DIR/$name"
+
+  if [ -L "$dst" ] && [ "$(readlink "$dst")" = "$src" ]; then
+    skipped=$((skipped + 1))
+    continue
+  fi
+
+  if [ -e "$dst" ] || [ -L "$dst" ]; then
+    mv "$dst" "$dst.bak.$stamp"
+    backed_up=$((backed_up + 1))
+  fi
+
+  ln -s "$src" "$dst"
+  linked=$((linked + 1))
+done
+
+echo "pb-suite Codex: linked=$linked skipped=$skipped backed_up=$backed_up target=$TARGET_DIR"
+[ "$backed_up" -gt 0 ] && echo "  backups suffix: .bak.$stamp"
+
+BOOTSTRAP_SRC="$REPO_DIR/scripts/lib/bootstrap-codex.sh"
+BOOTSTRAP_DST="$TARGET_DIR/pb-bootstrap.sh"
+if [ -f "$BOOTSTRAP_SRC" ]; then
+  if [ -L "$BOOTSTRAP_DST" ] && [ "$(readlink "$BOOTSTRAP_DST")" = "$BOOTSTRAP_SRC" ]; then
+    :
+  else
+    { [ -e "$BOOTSTRAP_DST" ] || [ -L "$BOOTSTRAP_DST" ]; } && mv "$BOOTSTRAP_DST" "$BOOTSTRAP_DST.bak.$stamp"
+    ln -s "$BOOTSTRAP_SRC" "$BOOTSTRAP_DST"
+  fi
+fi
