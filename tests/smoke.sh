@@ -68,6 +68,50 @@ assert "uninstall removes pb-bootstrap.sh symlink" "$?"
 [ -L "$HOME/.claude/commands/pb-bootstrap.sh" ]
 assert "install re-creates pb-bootstrap.sh symlink" "$?"
 
+# --- Section: Codex skills install / bootstrap ---
+
+echo "[Codex skills]"
+
+./install-codex >/tmp/pb-install-codex.log 2>&1
+assert "install-codex exits 0" "$?"
+
+[ -L "$HOME/.codex/skills/pb-bootstrap.sh" ]
+assert "Codex pb-bootstrap.sh symlink exists" "$?"
+
+[ "$(readlink "$HOME/.codex/skills/pb-bootstrap.sh")" = "$REPO_DIR/scripts/lib/bootstrap-codex.sh" ]
+assert "Codex bootstrap symlink resolves to repo bootstrap-codex.sh" "$?"
+
+(
+  unset PB_SUITE PB_SUITE_HOME
+  source "$HOME/.codex/skills/pb-bootstrap.sh"
+  [ "$PB_SUITE" = "$REPO_DIR" ]
+)
+assert "Codex bootstrap resolves PB_SUITE to repo root" "$?"
+
+(
+  unset PB_SUITE
+  PB_SUITE_HOME=/tmp source "$HOME/.codex/skills/pb-bootstrap.sh"
+  [ "$PB_SUITE" = "/tmp" ]
+)
+assert "Codex PB_SUITE_HOME=/tmp overrides PB_SUITE" "$?"
+
+COMMAND_COUNT=$(find commands -maxdepth 1 -type f -name 'pb*.md' | wc -l | tr -d ' ')
+SKILL_COUNT=$(find codex-skills -mindepth 2 -maxdepth 2 -name SKILL.md | wc -l | tr -d ' ')
+[ "$COMMAND_COUNT" = "$SKILL_COUNT" ]
+assert "every canonical command has a Codex skill" "$?"
+
+for command in commands/pb*.md; do
+  name="$(basename "$command" .md)"
+  [ -f "codex-skills/$name/SKILL.md" ]
+  assert "Codex source exists for $name" "$?"
+  grep -q "^name: $name$" "codex-skills/$name/SKILL.md"
+  assert "Codex source names $name" "$?"
+  grep -q 'source "\$HOME/.codex/skills/pb-bootstrap.sh"' "codex-skills/$name/SKILL.md"
+  assert "Codex source bootstraps $name" "$?"
+  [ -L "$HOME/.codex/skills/$name" ] && [ "$(readlink "$HOME/.codex/skills/$name")" = "$REPO_DIR/codex-skills/$name" ]
+  assert "Codex installation links $name" "$?"
+done
+
 # --- Section: converted skills source bootstrap ---
 
 echo "[skills sourcing pb-bootstrap.sh]"
