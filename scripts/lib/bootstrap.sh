@@ -14,7 +14,7 @@
 if [ -n "${PB_SUITE_HOME:-}" ] && [ -d "$PB_SUITE_HOME" ]; then
   PB_SUITE="$PB_SUITE_HOME"
 else
-  _pb_boot="$HOME/.claude/commands/pb-bootstrap.sh"
+  _pb_boot="${BASH_SOURCE[0]:-$HOME/.claude/commands/pb-bootstrap.sh}"
   _pb_target=$(readlink "$_pb_boot" 2>/dev/null || echo "$_pb_boot")
   # symlink target is <repo>/scripts/lib/bootstrap.sh — three dirnames up to repo root
   PB_SUITE=$(dirname "$(dirname "$(dirname "$_pb_target")")")

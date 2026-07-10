@@ -8,7 +8,7 @@ argument-hint: "[copy text or file path] [--mode rewrite|critique|generate|brand
 
 Pre-publish copy review and rewrite. Strips AI-slop, enforces project brand-tone from `CLAUDE.md`, applies one copywriting framework per surface. Same severity model as the rest of pb-suite: BLOCKER auto-fixes when obvious, IMPORTANT asks first, NIT mentions only.
 
-Distilled from the better Claude-Code copywriting skills (cyrwheelninja's AI-trope list, classic frameworks) but kept light: one framework per pass, project-specific rules read from `CLAUDE.md`, no DTC sales-page vibe — built for tools/SaaS/studio surfaces where words matter but enthusiasm doesn't.
+Distilled from practical copywriting review patterns and classic frameworks, but kept light: one framework per pass, project-specific rules read from `CLAUDE.md`, no DTC sales-page vibe — built for tools/SaaS/studio surfaces where words matter but enthusiasm doesn't.
 
 ## Modes
 
@@ -41,7 +41,7 @@ for f in CLAUDE.md AGENTS.md BRAND.md VOICE.md DESIGN.md; do
 done
 ```
 
-**Monorepo content-style packages** (e.g. Acme's `@acme/content-style`). Look for packages whose name or path hints at voice/tone/brand/copy:
+**Monorepo content-style packages**. Look for packages whose name or path hints at voice/tone/brand/copy:
 
 ```bash
 find packages -maxdepth 3 -type d \( -name "*content-style*" -o -name "*voice*" -o -name "*tone*" -o -name "*brand*" -o -name "*copy*" -o -name "*content*" \) 2>/dev/null | head -5
@@ -65,9 +65,9 @@ App-level rules override platform-level rules where they conflict.
 - **Exclamation marks** — allowed or forbidden
 - **Superlative ban list** — explicit or inferred ("no superlatives" → use pb-copy's default list)
 - **Preferred/avoided words** — when a content-style package or `## Words` section lists them, use those verbatim as overrides for the generic AI-tropes appendix
-- **Two-register split** — e.g. Sendays' "editorial marketing vs instrument product"
+- **Two-register split** — e.g. "editorial marketing vs instrument product"
 - **Required vocabulary** — brand words to use (e.g. "decision engine", "evidence", "shortlist") or avoid (e.g. "AI-powered" when too generic)
-- **Product-naming rules** — first-mention vs second-mention, sub-brand bans, deprecated names (e.g. Acme's "LegacyProduct" → "Acme Shortlist")
+- **Product-naming rules** — first-mention vs second-mention, sub-brand bans, deprecated names (e.g. "OldProductName" -> "NewProductName")
 - **Compliance posture** — audit-caution flags (e.g. "no wordplay around fraud/pretending"), regulator-tone constraints
 - **AI-positioning** — function-name preferred over marketing-claim ("AI-assisted screening" beats "Powered by AI")
 - **Length budgets** — if documented for specific surfaces

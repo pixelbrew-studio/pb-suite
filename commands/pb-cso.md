@@ -96,7 +96,7 @@ Tailor to the detected stack. Skip categories that don't apply.
 
 ### 6b. Canonical-narrative check (external surfaces)
 
-Some projects declare a canonical narrative in `CLAUDE.md` — a claim every external surface must make concrete (e.g. Acme's privacy-first / non-retention / GDPR posture, or a competitor's "no-data-sold" posture). When the diff adds or modifies copy on an external surface, that surface must back the claim with at least one concrete, verifiable statement — not a "we take X seriously" cliché.
+Some projects declare a canonical narrative in `CLAUDE.md` — a claim every external surface must make concrete (e.g. privacy-first / non-retention / GDPR posture, or a competitor's "no-data-sold" posture). When the diff adds or modifies copy on an external surface, that surface must back the claim with at least one concrete, verifiable statement — not a "we take X seriously" cliché.
 
 ```bash
 source "$PB_SUITE/scripts/lib/cil.sh"
