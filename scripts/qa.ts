@@ -229,10 +229,16 @@ async function main(): Promise<void> {
 
   const browser = await chromium.launch({ headless: true });
   try {
+    // Vercel Deployment Protection bypass: send the automation secret as a header
+    // (never in the URL) when VERCEL_AUTOMATION_BYPASS_SECRET is set in the env.
+    const bypass = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
     const context = await browser.newContext({
       userAgent: "Mozilla/5.0 (compatible; pb-qa/1)",
       viewport: { width: 1280, height: 800 },
       ...(args.storageState ? { storageState: args.storageState } : {}),
+      ...(bypass
+        ? { extraHTTPHeaders: { "x-vercel-protection-bypass": bypass, "x-vercel-set-bypass-cookie": "true" } }
+        : {}),
     });
     const page = await context.newPage();
 
