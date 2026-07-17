@@ -65,7 +65,9 @@ Triggers — apply unless the user explicitly opts out:
 
 | When | Run |
 |---|---|
-| Implementing new behavior | `/pb-tdd <slice>` (or `/pb-tdd --auto` if context is fuzzy) |
+| Tiny deterministic fix (one behavior, clear test) | `/pb-tdd <slice>` |
+| Nontrivial feature or refactor | `/pb-implement <objective>` — it plans verification and routes TDD, investigation, and specialist review by what the change touches |
+| Strict path (AI request, billing/credits, auth/tenant, storage/retention, secrets) | strict `/pb-implement` — human gate + mandatory cross-model review |
 | Touching files under `src/lib/ai/`, `src/lib/billing/`, `src/lib/auth/` | `/pb-cso --diff` before opening a PR |
 | Touching UI files (`.tsx`, `.css`, tailwind config) | `/pb-design-review` before opening a PR |
 | Touching `marketing/`, `landing/`, user-facing copy | `/pb-copy --mode rewrite` before opening a PR |
@@ -126,7 +128,7 @@ Decision tree — first match wins:
 4. Branch has commits, no PR → `/pb-pr`.
 5. PR open, CI green, no BLOCKERs → `/pb-ship`.
 6. Bug reproduced without root cause → `/pb-investigate`.
-7. New behavior planned, no test → `/pb-tdd <slice>`.
+7. New behavior planned → `/pb-implement <objective>` for a nontrivial feature/refactor; `/pb-tdd <slice>` for a tiny deterministic fix.
 8. Strategic choice with multiple plausible outcomes in this reply → `/cil-decide` (CIL repo only).
 9. "Where was I?" / context recovery → `/pb-resume`.
 10. Plan-vs-build gap suspected across sources → `/cil-pulse` (CIL repo only).

@@ -1,5 +1,5 @@
 ---
-description: Spec-first feature implementation, the orchestration layer above the suite. Plans verification before writing code (routing /pb-cso, /pb-design-review, /pb-copy by what the change touches), interviews for missing context, gates high-risk work behind explicit human approval, drives every slice through the /pb-tdd RED→GREEN→REFACTOR loop with one sub-agent per slice (escalating stuck slices to /pb-investigate), reviews with /pb-check breadth plus an independent cross-model frontier pass (Codex when Claude drives, Claude when Codex drives), feeds recurring patterns to /pb-evolve via the learning files, and proposes capturing repeatable work as a skill. Augmentation over blind automation.
+description: Spec-first feature implementation, the orchestration layer above the suite. Plans verification before writing code (routing /pb-cso, /pb-design-review, /pb-copy by what the change touches), interviews for missing context, gates high-risk work behind explicit human approval, drives every slice through the /pb-tdd RED→GREEN→REFACTOR loop — in-process by default, sub-agents only when independence, parallelism, or a fresh evaluator earns it (escalating stuck slices to /pb-investigate), reviews with /pb-check breadth plus an independent cross-model frontier pass (Codex when Claude drives, Claude when Codex drives), feeds recurring patterns to /pb-evolve via the learning files, and proposes capturing repeatable work as a skill. Augmentation over blind automation.
 allowed-tools: [Bash, Read, Edit, Write, Glob, Grep, Task, AskUserQuestion]
 argument-hint: "[what to build]  [--spec <file>] [--interview] [--plan-only] [--no-parallel]"
 ---
@@ -8,7 +8,7 @@ argument-hint: "[what to build]  [--spec <file>] [--interview] [--plan-only] [--
 
 Build new behavior from a spec, not from assumptions. The front of the loop is a written spec and a verification plan; the back is a check that the plan actually passed. In between, every slice that needs code is driven through the `/pb-tdd` RED→GREEN→REFACTOR loop by its own sub-agent. This command owns the layer above the loop: spec, risk gating, slicing, parallel dispatch, and skill capture — `/pb-tdd` owns each slice.
 
-Workflow: `/pb-implement <what>` → spec + verification plan → (human gate if strict) → one `/pb-tdd` agent per slice → verify against plan → `/pb-check` (suite review breadth) + independent cross-model frontier review (depth) → learning artifacts → `/pb-pr`/`/pb-ship`.
+Workflow: `/pb-implement <what>` → spec + verification plan → (human gate if strict) → `/pb-tdd` loop per slice (in-process by default, sub-agents when they earn it) → verify against plan → `/pb-check` (suite review breadth) + independent cross-model frontier review (depth) → learning artifacts → `/pb-pr`/`/pb-ship`.
 
 It reuses the suite rather than duplicating it: per-slice discipline is `/pb-tdd`, the review fan-out is `/pb-check` (which routes to `/pb-cso`, `/pb-design-review`, `/pb-copy`, `/pb-qa` by what changed), stuck slices escalate to `/pb-investigate`, and recurring patterns feed `/pb-evolve` through the learning files.
 
@@ -70,11 +70,17 @@ Partition for dispatch into **waves**:
 
 `--no-parallel` collapses everything to one sequential wave (use when slices touch overlapping files). Never run two agents that write the same file concurrently — partition by file before dispatching; reads may overlap freely, writes may not.
 
-### 6. Dispatch one /pb-tdd agent per slice
+### 6. Implement the slices
 
-Every slice that needs code goes through `/pb-tdd` — by default one sub-agent per slice, so the test-first contract is enforced per slice, not hand-waved across the feature. The orchestrator does not implement slices inline (the only exception: a single trivially small slice, where sub-agent overhead isn't worth it — the loop still runs, just in-process).
+Every slice that needs code runs the `/pb-tdd` loop — the test-first contract holds regardless of who executes it. What is **not** mandatory is a separate sub-agent per slice. Decompose sub-agents only when it buys something concrete:
 
-For each slice, spawn a `Task` agent whose entire mandate is the pb-tdd loop on that one slice. Hand it: the slice's Given/When/Then, its risk bucket and test layer, the spec path (`.context/spec-<slug>.md`), and the files it owns. Instruct it to run `/pb-tdd` and follow that loop exactly:
+- Slices are genuinely independent (disjoint files) and parallelism materially cuts elapsed time.
+- A fresh evaluator or a specialist perspective is needed (that is the point of the review passes in step 8, and of competing implementations on one hard slice).
+- The work is bulk-mechanical and fans out cleanly.
+
+Absent one of those, implement the coherent unit of work in-process, slice by slice, running the pb-tdd loop for each. A modern model carries a feature across implementation, tests, and integration more reliably than several isolated agents that lose local context and mis-wire interfaces at the seams — decomposition is a cost, not a default. A feature spanning several files is not by itself a reason to fan out.
+
+When you do dispatch a slice to a `Task` agent, hand it: the slice's Given/When/Then, its risk bucket and test layer, the spec path (`.context/spec-<slug>.md`), and the files it owns. Whether in-process or dispatched, follow the pb-tdd loop exactly:
 
 1. **Detect mode** — greenfield (new code) or brownfield (changing existing code → CHARACTERIZE current behavior with passing tests first).
 2. **RED** — write the failing test for the new behavior; confirm it fails for the right reason (assertion / missing symbol, not a syntax or import error).
@@ -122,7 +128,7 @@ Spec:           .context/spec-<slug>.md  (source: description | --spec | intervi
 Risk:           strict | light | skip  (<matched keyword or user choice>)
 Human gate:     approved | n/a (<bucket>)
 Verification:   <behavior → tool → auto/human-review>, one line each
-Slices/agents:  N slices in W waves (one /pb-tdd agent each) — <P parallel, S sequential>
+Slices:         N slices — <in-process | K dispatched to agents in W waves, P parallel / S sequential>
 Per slice:      <slice id → mode → first-red test → gate>, one line each
 Implementation: <files changed, line counts>
 Verify result:  auto=<all green?>  human-review=<surfaced items>
@@ -153,7 +159,8 @@ If this implementation followed a shape you'll repeat (same setup, same checks, 
 - **Silent spec divergence.** Implementation often reveals the spec was incomplete. The failure mode is patching around it quietly. Amend the spec file and, for strict work, re-confirm the gate — don't let the code become the only record of what was built.
 - **Parallel write collisions.** Two sub-agents editing the same file race and clobber. Partition by file before dispatching; `--no-parallel` when partitions overlap. Reads can overlap freely; writes cannot.
 - **Agent skips RED.** A slice agent that writes code first and a passing test after has not done TDD — it has written a test that can never have caught the bug. Require each agent to report the first failing test and *why* it failed; a slice with no recorded RED is re-dispatched, not accepted.
-- **Orchestrator implements inline.** The temptation on a "quick" slice is to just write it in the main loop and skip the agent. That erodes the per-slice contract the moment it's convenient. Inline is allowed only for a single trivially small slice — more than one slice means agents, every time.
+- **Contract skipped, not the agent.** Implementing in-process is fine and often better — dropping the pb-tdd loop is not. The failure mode is "quick" slices that skip RED or skip the risk-bucket gate because no sub-agent was there to enforce them. In-process means the orchestrator runs the loop itself, per slice, with the RED recorded; it does not mean writing code first and a passing test after.
+- **Fanning out by reflex.** Spawning one agent per file because a feature touches several is decomposition for its own sake. Isolated agents lose the shared context that keeps interfaces consistent and re-wire the seams wrong. Fan out only for genuine independence, parallel time savings, a fresh evaluator, or a specialist perspective (step 6) — otherwise carry the unit of work coherently.
 - **Cross-model review rubber-stamped or pasted raw.** The review is verification, not decoration. Dumping the other model's output verbatim, or accepting "looks good" without reading it, defeats the cross-model check. Triage every finding through the severity model, fix real BLOCKERs test-first, and state why anything dismissed was dismissed — a finding you can't refute is a finding you act on.
 - **Skipping the routed specialist review.** A billing diff that gets only `/pb-review` and the cross-model pass, but no `/pb-cso --diff`, was under-reviewed — the security lens the suite already has for that path never ran. The verification plan routes by what the change touches (step 3); `/pb-check` then runs those reviews. Don't quietly drop one because the slice "looked fine."
 - **Re-deriving instead of routing.** Hand-rolling a security check, a debugging loop, or a learning note inside this command duplicates `/pb-cso`, `/pb-investigate`, `/pb-evolve` — and drifts from them the moment one changes. Call the skill; if it's missing something, improve that skill.
@@ -162,7 +169,7 @@ If this implementation followed a shape you'll repeat (same setup, same checks, 
 
 ## What this command does NOT do
 
-- Not a replacement for `/pb-tdd` — it orchestrates above it, running one `/pb-tdd` agent per slice; the RED→GREEN→REFACTOR loop itself stays `/pb-tdd`'s job.
+- Not a replacement for `/pb-tdd` — it orchestrates above it, running the `/pb-tdd` loop per slice (in-process or dispatched); the RED→GREEN→REFACTOR loop itself stays `/pb-tdd`'s job.
 - Not a full feature in one silent run — strict work pauses at the human gate; the spec stays visible and amendable.
 - Not auto-commit or auto-merge — produces a working-tree change; `/pb-pr` drafts, `/pb-ship` lands.
 - Not a re-implementation of the suite — it routes to `/pb-check`, `/pb-cso`, `/pb-investigate`, `/pb-evolve` rather than re-deriving review, security, debugging, or learning logic. If a review dimension is missing, fix the underlying skill, not this one.
