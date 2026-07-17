@@ -10,6 +10,8 @@ Test-first development for coding-agent work. The agent treats tests as the cont
 
 Workflow: `/pb-tdd <description>` → produces a working-tree change → `/pb-review` → `/pb-ship`.
 
+Test-first applies where an automated test is a trustworthy oracle for the behavior — deterministic domain/decision logic, parsers and transformations, matching algorithms, state machines, authorization rules, reproducible bug fixes, public API contracts. Where the strongest evidence is something else (a runtime probe for a DB/route boundary, a browser check for UI, human judgment for copy or taste, a measurement for performance), that evidence belongs in the `/pb-implement` verification plan, not a brittle assertion forced to stand in for it. Reach for `/pb-implement` when the change spans more than one behavior or needs mixed evidence; `/pb-tdd` owns the single slice whose contract is a test.
+
 ## Risk buckets
 
 Risk determines TDD strictness. Default buckets (override per project via a `## Testing policy` block in `CLAUDE.md`):
