@@ -66,7 +66,7 @@ App-level rules override platform-level rules where they conflict.
 - **Superlative ban list** — explicit or inferred ("no superlatives" → use pb-copy's default list)
 - **Preferred/avoided words** — when a content-style package or `## Words` section lists them, use those verbatim as overrides for the generic AI-tropes appendix
 - **Two-register split** — e.g. "editorial marketing vs instrument product"
-- **Required vocabulary** — brand words to use (e.g. "decision engine", "evidence", "shortlist") or avoid (e.g. "AI-powered" when too generic)
+- **Required vocabulary** — brand words to use (e.g. "workspace", "report", "insight") or avoid (e.g. "AI-powered" when too generic)
 - **Product-naming rules** — first-mention vs second-mention, sub-brand bans, deprecated names (e.g. "OldProductName" -> "NewProductName")
 - **Compliance posture** — audit-caution flags (e.g. "no wordplay around fraud/pretending"), regulator-tone constraints
 - **AI-positioning** — function-name preferred over marketing-claim ("AI-assisted screening" beats "Powered by AI")

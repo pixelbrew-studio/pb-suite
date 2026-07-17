@@ -16,8 +16,8 @@ cil_repo_p() {
   [ -f "$root/CIL/sources.md" ]
 }
 
-# Extract Linear ticket key (e.g. EVA-198) from a branch name.
-# Accepts: eva-198-foo, EVA-198/foo, feat/eva-198-foo, foo-eva-198, EVA198-foo.
+# Extract Linear ticket key (e.g. ABC-123) from a branch name.
+# Accepts: abc-123-foo, ABC-123/foo, feat/abc-123-foo, foo-abc-123, ABC123-foo.
 # Echoes the uppercase key or nothing.
 cil_linear_ticket_from_branch() {
   local branch="$1"

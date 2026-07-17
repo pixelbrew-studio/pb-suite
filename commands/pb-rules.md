@@ -77,7 +77,7 @@ Triggers — apply unless the user explicitly opts out:
 | Pre-merge | `/pb-ship` (refuse the merge if BLOCKERs remain) |
 | Live QA of a deploy | `/pb-qa <url>` for evidence, then `/pb-investigate` for cause |
 | Fetching URL content | `/pb-browse <url>` instead of WebFetch |
-| Branch name encodes a tracker key (e.g. `EVA-198-foo`) | `/pb-pr` will seed the summary from the ticket and append `Closes <KEY>` |
+| Branch name encodes a tracker key (e.g. `ABC-123-foo`) | `/pb-pr` will seed the summary from the ticket and append `Closes <KEY>` |
 
 Risk buckets — strict means TDD required, full edge-case broadening:
 

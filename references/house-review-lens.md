@@ -6,8 +6,8 @@ under a **"House reviewer"** axis: `pb-copy` (copy), `pb-design-review` (UI),
 (BLOCKER / IMPORTANT / NIT).
 
 It is seeded from anonymized pilot-user feedback on a real product (June 2026).
-The reviewer is the canonical *target user*: episodic evaluator, no technical
-background. The feedback is high-signal about product copy, UX clarity, and
+The reviewer is the canonical *target user*: a non-technical end user with no
+engineering background. The feedback is high-signal about product copy, UX clarity, and
 "does this earn its place", and low-signal about technical feasibility. This file
 captures both, so a skill can apply the eye **and** know when to push back. The
 *patterns* generalize to any product; surfaces such as account pages, public
@@ -23,7 +23,7 @@ Each is a pattern to detect, with the move the reviewer expects.
 
 | ID | Pattern | How it shows up | Severity | The move |
 |----|---------|-----------------|----------|----------|
-| **HR-01** | Vanity / context-free aggregate | A number summed across a context the user doesn't act on ("2 shortlisted candidates" across projects; per-criterion counts across candidates). Tell: *"is this summed across X? what's the use?"* | IMPORTANT | Remove it, OR if it has real value at scale, **label its purpose** — never ship a context-free total. |
+| **HR-01** | Vanity / context-free aggregate | A number summed across a context the user doesn't act on (a total rolled up across unrelated projects; per-field counts summed across records). Tell: *"is this summed across X? what's the use?"* | IMPORTANT | Remove it, OR if it has real value at scale, **label its purpose** — never ship a context-free total. |
 | **HR-02** | AI-slop / generic copy | Filler, hype, jargon, padded "AI-generated (badly)" text. Tell: *"terrible texts", "bad AI-generated copy"*. | IMPORTANT | Rewrite concrete and sober. Hand to `/pb-copy`. |
 | **HR-03** | Redundancy | The same info twice, filler card subtitles, the same links in several places. | NIT (IMPORTANT if it causes confusion) | Cut the duplicate. Keep the *pattern/slot* if it is load-bearing (see CAL-01). |
 | **HR-04** | Escape route / stranding | A link that sends a signed-in or in-product user OUT to a general, logged-out, or unfinished surface with no path back. Tell: *"I'm lost", "it takes me to a page where I'm logged out"*. | IMPORTANT | Keep users in product context; link same-domain/in-product; remove links to weak pages until they're fixed. |
@@ -61,7 +61,7 @@ Apply the eye, but do **not** apply the proposed fix blindly. Check these before
 - **CAL-02 — "What's the use?" can mean "label it", not "delete it".** If a feature is low-value at the test scale but genuinely useful at the product's target scale, state its purpose rather than remove it. Decide on real decision-value at scale.
 - **CAL-03 — Don't remove legally-required surfaces.** Acceptance of Terms/Privacy/DPA, company identification, refund-rights wording are legal requirements; "one place / remove it" does not override them.
 - **CAL-04 — Don't drop deliberate positioning.** Strategic framing can look like filler. Preserve intentional positioning from the project's canonical docs.
-- **CAL-05 — Technical feasibility / architecture.** Some asks aren't advisable: per-product duplicate legal documents (drift/audit risk vs one source + annexes); "delete account = delete all data" ignoring a shared cross-product identity. Reframe to what's correct and explain why.
+- **CAL-05 — Technical feasibility / architecture.** Some asks aren't advisable: per-product duplicate legal documents (drift/audit risk vs one source + annexes); "delete account = delete all data" ignoring a shared account that spans several products. Reframe to what's correct and explain why.
 - **CAL-06 — Verify before agreeing on accuracy.** When the reviewer says "wrong info" or "this feature doesn't exist", confirm against the code — usually right, occasionally the proposed correction introduces its own inaccuracy.
 
 The throughline: **the reviewer is usually right about the symptom (this confuses/strands me, this is filler, what's the use), and the value is in choosing the right fix** — rewrite, relabel, keep-and-explain, or remove — rather than taking the proposed action literally.
@@ -71,4 +71,4 @@ The throughline: **the reviewer is usually right about the symptom (this confuse
 ## Changelog
 
 - 2026-06-27 — Initial lens. Distilled from ~14 anonymized pilot-user review
-  tasks covering entry, account/settings, dashboard, credits, and review surfaces.
+  tasks covering entry, account/settings, dashboard, and core content surfaces.

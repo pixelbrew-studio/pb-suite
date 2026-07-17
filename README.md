@@ -175,7 +175,7 @@ Commands are grouped by workflow area. Full instructions live in the correspondi
 When a repo has a top-level `CIL/sources.md`, some pb-* commands automatically enable a CIL bridge:
 
 - `/pb-resume` — adds assigned tracker items and recent specs. `--no-cil` to suppress.
-- `/pb-pr` — extracts a tracker key from the branch name (e.g. `EVA-198-foo`), seeds the summary from the matching ticket, appends `Closes <KEY>`.
+- `/pb-pr` — extracts a tracker key from the branch name (e.g. `ABC-123-foo`), seeds the summary from the matching ticket, appends `Closes <KEY>`.
 - `/pb-ship` — the gate splits into ship / wait / defer / decide. `defer` opens a follow-up ticket when supported; `decide` stays for genuinely strategic choices (cil-decide enforcement). Exit-readiness forced-read prompt on external-surface / load-bearing / legal / billing / auth diffs.
 - `/pb-cso` — canonical-narrative check: when `CLAUDE.md` declares a narrative (e.g. privacy-first) and the diff adds external-surface copy, flags a missing concrete claim (IMPORTANT) or contradictory copy (BLOCKER).
 - `/pb-evolve --cil` — reads `CIL/improvements/*.md` and `CIL/incidents.md` in addition to the `.claude/*.md` artifacts.

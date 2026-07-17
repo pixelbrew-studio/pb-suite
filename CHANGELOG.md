@@ -2,6 +2,17 @@
 
 Notable changes to pb-suite. Follows semver, written newest-first.
 
+## 0.9.1
+
+- `/pb-cso`, `/pb-review`, and `/pb-design-review` gain checks promoted from recurring lessons via `/pb-evolve`: A01 multi-tenant RLS write-path scope-crossing (permissive policies OR-combine; `WITH CHECK` must pin the same scope as `USING`), A04 credit/spend-path guarding (the region between spend and terminal response must refund/record, not just classify), return-path contract-shape parity, a shared-union check for status/enum literals used in 3+ files, and a raw-framework-palette-utility check where semantic tokens exist.
+- `README.md` documents where the rules come from — checks are promoted from private per-project lesson/incident logs through `/pb-evolve`, only the abstracted rule lands in the public suite.
+
+## 0.9.0
+
+- Objective-driven routing. The `/pb-rules` canonical workflow block now routes by objective instead of sending all new behavior to `/pb-tdd`: tiny deterministic fix → `/pb-tdd`, nontrivial feature/refactor → `/pb-implement`, strict paths → strict `/pb-implement`. The next-step decision tree matches.
+- Evidence-driven TDD. `/pb-tdd` states that test-first applies where an automated test is a trustworthy oracle (domain logic, parsers, state machines, authz, reproducible bugs, API contracts); other evidence (runtime probe, browser check, human judgment, measurement) routes through the `/pb-implement` verification plan.
+- `/pb-implement` no longer mandates one sub-agent per slice. In-process implementation is the default; fan out only for genuine independence, parallel time savings, a fresh evaluator, or a specialist perspective. The pb-tdd loop (RED recorded, risk gate) still runs per slice regardless of executor.
+
 ## 0.8.0
 
 - Smoke tests no longer mutate the developer's live install: `./tests/smoke.sh` now installs/uninstalls into a throwaway `mktemp -d` (via `CLAUDE_COMMANDS_DIR`) and removes it on exit, so running the tests can never repoint or delete real `~/.claude/commands` symlinks. `scripts/lib/bootstrap.sh` self-locates via `BASH_SOURCE` instead of a hardcoded `$HOME` path, which keeps `PB_SUITE` resolution correct under that isolation (production behavior unchanged).
@@ -39,10 +50,10 @@ Notable changes to pb-suite. Follows semver, written newest-first.
 - Add `scripts/lib/cil.sh` — opt-in CIL integration helpers, no-op outside a CIL repo (detected via top-level `CIL/sources.md`). Provides `cil_repo_p`, `cil_linear_ticket_from_branch`, `cil_external_surface_p`, `pb_load_bearing_paths`, `pb_load_bearing_p`. Skills source this and degrade silently when the file or repo is absent.
 - Add `/pb` — discovery index. Prints the canonical trigger table (repo's `## Workflow (pb-suite)` block, falling back to `pb-rules` canonical), every installed `pb-*` command with its description, repo signals (CIL? CLAUDE.md? load-bearing block? opt-ins?), and a one-sentence suggested next step from git state. Read-only.
 - `/pb-resume` now auto-bridges Linear + Notion context when running inside a CIL repo. Adds a capped section listing assigned Linear tickets (In Progress + Todo) and Notion specs updated in the window; the branch's matching ticket is starred. Pass `--no-cil` to suppress. Removed stale "out of scope (v1)" note about Linear/Notion crossref.
-- `/pb-pr` extracts a tracker key (e.g. `EVA-198`) from the branch name and seeds the PR summary from the ticket via the Linear MCP when available. Appends `Closes <KEY>` to the default template so Linear auto-links on open. Fails open — no tracker, no MCP, no-op.
+- `/pb-pr` extracts a tracker key (e.g. `ABC-123`) from the branch name and seeds the PR summary from the ticket via the Linear MCP when available. Appends `Closes <KEY>` to the default template so Linear auto-links on open. Fails open — no tracker, no MCP, no-op.
 - `/pb-ship` splits the gate into four options: **ship / wait / defer / decide**. **defer** opens a Linear follow-up via MCP (or prints a paste-ready draft) for "do later, not strategic" — keeps `cil-decide` reserved for genuinely strategic choices, matching its scope-rule. Adds a step 6a exit-readiness forced-read prompt when the diff touches external surfaces, load-bearing paths, or `legal/` / `subprocessor` / `privacy` / `billing/` / `auth/` in a CIL repo. Reads `CIL/exit-readiness.md` when present.
 - `/pb-cso` adds a step 6b canonical-narrative check. When `CLAUDE.md` declares a canonical narrative (e.g. privacy-first) AND the diff adds user-facing copy on an external surface, surfaces in `IMPORTANT` when no concrete claim backs the narrative, `BLOCKER` when the copy actively contradicts it. Cliché "we take X seriously" lines do not count.
-- `/pb-rules` canonical block now (1) documents the `## pb-suite: load-bearing files` block — repo-level globs consumed by `/pb-ship` (classifier) and `/pb-cso` (severity heightening); (2) mentions `--cil` for `/pb-evolve` when in a CIL repo; (3) adds a trigger row for branch-encoded tracker keys (`EVA-198-foo` → `Closes` footer).
+- `/pb-rules` canonical block now (1) documents the `## pb-suite: load-bearing files` block — repo-level globs consumed by `/pb-ship` (classifier) and `/pb-cso` (severity heightening); (2) mentions `--cil` for `/pb-evolve` when in a CIL repo; (3) adds a trigger row for branch-encoded tracker keys (`ABC-123-foo` → `Closes` footer).
 - `/pb-evolve` accepts `--cil` (auto-enabled when `cil_repo_p`, pass `--cil=off` to suppress). Ingests `CIL/improvements/*.md` and `CIL/incidents.md` in addition to the `.claude/*.md` artifacts. Marks CIL-sourced samples with `[CIL]` in step 6.
 - `install` now also symlinks `commands/pb.md` (previously only `pb-*.md` matched the glob).
 

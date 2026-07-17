@@ -269,9 +269,9 @@ grep -q '^pb_load_bearing_paths' scripts/lib/cil.sh && grep -q '^pb_load_bearing
 assert "cil.sh exports load-bearing helpers" "$?"
 
 # Linear key extraction is idempotent (uppercase + hyphen-normalized)
-KEY=$(bash -c 'source scripts/lib/cil.sh; cil_linear_ticket_from_branch eva-198-some-feature')
-[ "$KEY" = "EVA-198" ]
-assert "cil_linear_ticket_from_branch normalizes 'eva-198-...' to 'EVA-198'" "$?"
+KEY=$(bash -c 'source scripts/lib/cil.sh; cil_linear_ticket_from_branch abc-123-some-feature')
+[ "$KEY" = "ABC-123" ]
+assert "cil_linear_ticket_from_branch normalizes 'abc-123-...' to 'ABC-123'" "$?"
 
 # Suite-level wiring
 grep -q '/pb-ship.md\|pb-ship.md' commands/pb-ship.md 2>/dev/null  # sanity
