@@ -65,8 +65,29 @@ Invoke `e2e-from-pr` on the current PR.
 
 The skill writes specs to the project's permanent test locations (`e2e/tests/`, `tests/`, etc.) and runs them. Read its report:
 
-- All items pass → step 4
+- All items pass → step 3b
 - Any item fails → stop, surface the failure, do not prompt for merge
+
+### 3b. Preview e2e (apps exposing `e2e:preview`)
+
+Skip if `--no-preview` is in `$ARGUMENTS`.
+
+For each app affected by the PR diff (monorepo: any `apps/<name>/**` path; single-package repo: the repo root) whose `package.json` defines an `e2e:preview` script:
+
+1. Resolve the PR's preview URL for that app — the deploy platform's branch alias (Vercel: `<project>-git-<branch>-<team>.vercel.app`) or the deploy bot's PR comment. Confirm the deployment is Ready before running.
+2. Resolve the protection-bypass secret at run time from the secret manager named in the project's preview-QA rule (this repo's default: 1Password item `vercel-preview-<project>-qa-bypass`, field `VERCEL_AUTOMATION_BYPASS_SECRET`, via `op read`). Never echo the value, never persist it to a file.
+3. Run it scoped to the app:
+
+```bash
+PLAYWRIGHT_BASE_URL="$PREVIEW_URL" \
+VERCEL_AUTOMATION_BYPASS_SECRET="$(op read "op://<vault>/<item>/VERCEL_AUTOMATION_BYPASS_SECRET")" \
+pnpm --filter <package> e2e:preview
+```
+
+- All runs pass → step 4
+- Any run fails → stop, surface the failure (spec name + preview URL), do not prompt for merge
+- No affected app defines `e2e:preview` → log "preview e2e: skipped — no e2e:preview script in affected apps" and continue
+- Preview deployment errored or absent → treat as a failure, not a skip: a PR whose preview does not build should not reach the merge prompt
 
 ### 4. Classify each new spec
 
@@ -171,6 +192,7 @@ Based on the user's choice:
 pb-ship: <shipped | left-open | deferred | decided | dry-pass | dry-fail | blocked>
   pb-review:   N findings (X BLOCKER, Y IMPORTANT, Z NIT)
   verify:      K test-plan items, all pass (or: M failed)
+  preview:     <apps run> pass (or: <app> failed | skipped — no e2e:preview)
   classify:    P persisted, R reverted, A asked
   mode:        smart | regress | no-regress
   PR:          <url>
