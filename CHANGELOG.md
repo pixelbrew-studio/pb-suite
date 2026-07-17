@@ -2,6 +2,10 @@
 
 Notable changes to pb-suite. Follows semver, written newest-first.
 
+## 0.9.2
+
+- `/pb-implement` and `/pb-ship` can use OpenCode with an explicitly pinned frontier-tier GLM or Grok model when the preferred Claude/Codex cross-model reviewer is unavailable. The fallback preserves model-family independence, records the resolved `provider/model` id, and keeps strict work blocked when the configured model is missing, mid-tier, or from the authoring family.
+
 ## 0.9.1
 
 - `/pb-cso`, `/pb-review`, and `/pb-design-review` gain checks promoted from recurring lessons via `/pb-evolve`: A01 multi-tenant RLS write-path scope-crossing (permissive policies OR-combine; `WITH CHECK` must pin the same scope as `USING`), A04 credit/spend-path guarding (the region between spend and terminal response must refund/record, not just classify), return-path contract-shape parity, a shared-union check for status/enum literals used in 3+ files, and a raw-framework-palette-utility check where semantic tokens exist.

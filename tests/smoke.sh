@@ -284,6 +284,26 @@ assert "pb-ship gate has defer + decide options" "$?"
 grep -q 'exit-readiness' commands/pb-ship.md
 assert "pb-ship has exit-readiness prompt" "$?"
 
+# Cross-model review keeps an independent frontier fallback when the preferred
+# Claude/Codex reviewer is unavailable.
+grep -q 'OpenCode fallback' commands/pb-implement.md \
+  && grep -q 'opencode run --agent plan --model' commands/pb-implement.md \
+  && grep -qE 'GLM.*Grok|Grok.*GLM' commands/pb-implement.md
+assert "pb-implement supports an OpenCode GLM/Grok fallback" "$?"
+
+grep -q 'OpenCode fallback' commands/pb-ship.md \
+  && grep -q 'opencode run --agent plan --model' commands/pb-ship.md \
+  && grep -qE 'GLM.*Grok|Grok.*GLM' commands/pb-ship.md
+assert "pb-ship enforces the OpenCode GLM/Grok fallback" "$?"
+
+grep -qE 'read-only.*plan|plan.*read-only' commands/pb-implement.md
+assert "OpenCode fallback explains why the plan agent is pinned" "$?"
+
+grep -q 'PB_OPENCODE_REVIEW_MODEL' commands/pb-implement.md \
+  && grep -q 'provider/model' commands/pb-implement.md \
+  && grep -qE 'remain(s)? (a )?BLOCKER|does not satisfy the gate' commands/pb-implement.md
+assert "OpenCode fallback requires an explicit frontier model or stays blocked" "$?"
+
 grep -q 'cil_linear_ticket_from_branch\|TICKET=' commands/pb-pr.md
 assert "pb-pr extracts tracker key from branch" "$?"
 

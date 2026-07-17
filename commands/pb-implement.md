@@ -110,6 +110,14 @@ Two passes, deliberately diverse. Don't re-implement what the suite already does
 - Claude-driven session → Codex review via the `codex` review agent, on its frontier model (the CLI default when that is the top tier; pin `-m` only to *upgrade*, never to downgrade)
 - Codex-driven session → Claude review via `claude -p` on the frontier model (`claude --model claude-fable-5`; fall back to the top Opus only if Fable is unavailable)
 
+**OpenCode fallback.** If the preferred Claude/Codex reviewer or its frontier model is unavailable, try OpenCode before declaring the cross-model pass unavailable. Require `PB_OPENCODE_REVIEW_MODEL` to contain an explicit `provider/model` id for a current frontier-tier **GLM or Grok** model that differs from the authoring model family. Confirm that exact id is available in `opencode models` (refresh the catalog if needed), then dispatch the same review prompt non-interactively through OpenCode's built-in read-only `plan` agent:
+
+```bash
+opencode run --agent plan --model "$PB_OPENCODE_REVIEW_MODEL" --dir "$(git rev-parse --show-toplevel)" "<review prompt>"
+```
+
+Do not use OpenCode's default agent or model, and do not guess an unpinned id. If local configuration overrides `plan` to permit edits, OpenCode is unavailable, the variable is unset, the model cannot be resolved, the model is not frontier-tier, or it belongs to the authoring family, the cross-model pass **does not satisfy the gate** and remains a BLOCKER for strict work. OpenCode is the review harness; model-family independence still comes from the resolved GLM or Grok model. Record the exact resolved `provider/model` id, not merely "OpenCode".
+
 Dispatch the review of the branch diff (vs the merge base) with the spec (`.context/spec-<slug>.md`) and risk bucket as context, asked specifically for correctness bugs, missing edge cases, and security/scope issues the tests assume away. Independence from the agents that wrote *and* reviewed the slices is the point. Record the **resolved model id** in the report — a cross-model run on a mid-tier model does not satisfy the gate.
 
 Triage every finding from both passes through the suite severity model — do not paste raw output:
@@ -118,7 +126,7 @@ Triage every finding from both passes through the suite severity model — do no
 - **IMPORTANT** — surface with your assessment; ask before acting (taste / completeness call).
 - **NIT** — mention once; fix only if asked.
 
-A reviewer (suite or cross-model) is not an oracle: discard findings that are wrong or out of scope, but say *why* — don't silently drop one you can't refute. If the other family's CLI is unavailable, say so in the report and note the cross-model pass did not run; `/pb-check` still ran, so review did not collapse to nothing.
+A reviewer (suite or cross-model) is not an oracle: discard findings that are wrong or out of scope, but say *why* — don't silently drop one you can't refute. If both the preferred reviewer and the OpenCode fallback are unavailable, say so in the report and note the cross-model pass did not run; `/pb-check` still ran, so review did not collapse to nothing.
 
 ### 9. Report
 
