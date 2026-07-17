@@ -18,6 +18,16 @@ Get the base URL from `$ARGUMENTS`. If none: stop and ask. Do not guess `localho
 
 If the URL is unreachable, surface that and stop. Do not pretend to QA an offline target.
 
+**Protected Vercel previews.** A preview URL behind Deployment Protection redirects to a Vercel login and every route reads as the login page (or a 401/307). To QA through it, set the project's Protection Bypass for Automation secret in the env before running — `qa.ts` sends it as the `x-vercel-protection-bypass` header (never in the URL, so it stays out of logs):
+
+```bash
+export VERCEL_AUTOMATION_BYPASS_SECRET=$(security find-generic-password -s cil-pixelbrew -a vercel-bypass-<project> -w)
+```
+
+The secret lives in the macOS Keychain (service `cil-pixelbrew`, account `vercel-bypass-<project>`), created once in Vercel → Project Settings → Deployment Protection → Protection Bypass for Automation. Without it, a protected preview yields only login pages, not real QA. This bypass clears the Vercel wall only; an app's own login (Supabase, etc.) still needs `--storage-state`.
+
+**Anchor navs vs routes.** When discovery finds few routes, do not guess route paths from nav labels and treat their 404s as bugs — single-page navs link to on-page anchors (`#pricing`), not routes (`/pricing`), so guessed paths 404 for a benign reason. Extract the actual hydrated `<a href>` set first (or use `--routes` only with paths you have confirmed exist).
+
 ### 2. Resolve the script
 
 ```bash
