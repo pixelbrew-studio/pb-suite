@@ -63,11 +63,13 @@ Run in order. Stop early if a finding warrants discussion before continuing.
 - New error case with only `console.log` or a swallow
 - Obvious missed edge cases — empty array, zero, null, very large input, unicode, timezone
 - Skipped or focused tests left in: `xit`, `.skip`, `.only`, `describe.only`
+- Every return path — fallback, degraded, error, empty — satisfies the same contract shape as the happy path: pagination token present, filter controls still rendered on zero results, a failed source rendered "Unavailable" rather than a fake zero
 
 **Maintainability** (only flag egregious)
 - Dead code introduced
 - Obvious duplication where a helper would clearly serve
 - Magic numbers or strings without context
+- A status/enum string literal consumed in 3+ files with no shared union/const — the next rename leaves a writer, reader, guard, or DB constraint silently behind
 - Comments that contradict the code
 
 ### 4. Categorize and act

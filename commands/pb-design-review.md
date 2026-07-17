@@ -86,6 +86,7 @@ Run in order. Stop early if a finding warrants discussion. Categories below cove
 
 **Color & depth** (Refactoring UI §5-6)
 - Hardcoded hex/rgba where a token exists for that role
+- Raw framework palette utilities (`text-slate-700`, `text-emerald-800`, …) in app components where semantic tokens exist — palette literals enter through freshly-scaffolded files, not edits; status colors added variant-by-variant instead of promoted to `--color-status-*` tokens
 - Pure greys without hue when the project's palette uses gray-with-hue
 - RGB used for new colors when the project's convention is HSL/HSLA
 - Saturation jumps — neutral palette plus a sudden saturated accent without precedent
