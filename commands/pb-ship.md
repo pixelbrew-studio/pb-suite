@@ -59,6 +59,8 @@ Invoke `pb-review`. Wait for completion. Read the BLOCKER count from its report.
 
 If `BLOCKER ≥ 1`: stop here. Surface the findings. Do not run verify. Do not prompt for merge.
 
+**Strict-bucket diffs require a completed cross-model review.** If the diff matches the repo's strict risk bucket or its `pb-suite: load-bearing files` globs, a cross-model review must be on record before the gate: a review of this branch diff by a **frontier-tier model from a different family than the one that authored it** (Claude-authored → Codex frontier; Codex-authored → Claude frontier, `claude --model claude-fable-5`), with its findings triaged. No such pass, or a pass run on a mid-tier model → treat as a BLOCKER: run it now (as `pb-implement` step 8b does) before proceeding. Same-model review plus passing tests share the author's blind spots by construction — on strict diffs this pass is the gate, not polish.
+
 ### 3. e2e-from-pr
 
 Invoke `e2e-from-pr` on the current PR.

@@ -1,5 +1,5 @@
 ---
-description: Spec-first feature implementation, the orchestration layer above the suite. Plans verification before writing code (routing /pb-cso, /pb-design-review, /pb-copy by what the change touches), interviews for missing context, gates high-risk work behind explicit human approval, drives every slice through the /pb-tdd RED→GREEN→REFACTOR loop with one sub-agent per slice (escalating stuck slices to /pb-investigate), reviews with /pb-check breadth plus an independent cross-model Codex pass, feeds recurring patterns to /pb-evolve via the learning files, and proposes capturing repeatable work as a skill. Augmentation over blind automation.
+description: Spec-first feature implementation, the orchestration layer above the suite. Plans verification before writing code (routing /pb-cso, /pb-design-review, /pb-copy by what the change touches), interviews for missing context, gates high-risk work behind explicit human approval, drives every slice through the /pb-tdd RED→GREEN→REFACTOR loop with one sub-agent per slice (escalating stuck slices to /pb-investigate), reviews with /pb-check breadth plus an independent cross-model frontier pass (Codex when Claude drives, Claude when Codex drives), feeds recurring patterns to /pb-evolve via the learning files, and proposes capturing repeatable work as a skill. Augmentation over blind automation.
 allowed-tools: [Bash, Read, Edit, Write, Glob, Grep, Task, AskUserQuestion]
 argument-hint: "[what to build]  [--spec <file>] [--interview] [--plan-only] [--no-parallel]"
 ---
@@ -8,7 +8,7 @@ argument-hint: "[what to build]  [--spec <file>] [--interview] [--plan-only] [--
 
 Build new behavior from a spec, not from assumptions. The front of the loop is a written spec and a verification plan; the back is a check that the plan actually passed. In between, every slice that needs code is driven through the `/pb-tdd` RED→GREEN→REFACTOR loop by its own sub-agent. This command owns the layer above the loop: spec, risk gating, slicing, parallel dispatch, and skill capture — `/pb-tdd` owns each slice.
 
-Workflow: `/pb-implement <what>` → spec + verification plan → (human gate if strict) → one `/pb-tdd` agent per slice → verify against plan → `/pb-check` (suite review breadth) + independent Codex review (cross-model depth) → learning artifacts → `/pb-pr`/`/pb-ship`.
+Workflow: `/pb-implement <what>` → spec + verification plan → (human gate if strict) → one `/pb-tdd` agent per slice → verify against plan → `/pb-check` (suite review breadth) + independent cross-model frontier review (depth) → learning artifacts → `/pb-pr`/`/pb-ship`.
 
 It reuses the suite rather than duplicating it: per-slice discipline is `/pb-tdd`, the review fan-out is `/pb-check` (which routes to `/pb-cso`, `/pb-design-review`, `/pb-copy`, `/pb-qa` by what changed), stuck slices escalate to `/pb-investigate`, and recurring patterns feed `/pb-evolve` through the learning files.
 
@@ -43,7 +43,7 @@ Before building, write down how each behavior in the spec will be proven, and wi
 - **Automated, quantifiable** → tests via `/pb-tdd` (Vitest unit/integration, Playwright e2e). Default for anything with a deterministic right answer.
 - **Runtime / visual** → `/pb-qa <url>` for console/network/broken-image evidence, `/pb-browse <url>` for content, screenshots for layout.
 - **External state** → the relevant MCP tool (DB row via Supabase, event via PostHog, payment object via Stripe) to confirm the side effect actually landed.
-- **Specialist review, routed by what the change touches** → don't hand-pick a generic pass; read the project's `CLAUDE.md` trigger table and the areas the slices will touch, and add the matching review as a **mandatory** plan line: `src/lib/{ai,billing,auth}/` → `/pb-cso --diff`; `.tsx`/`.css`/tailwind → `/pb-design-review`; `marketing`/`landing`/user-facing copy → `/pb-copy --mode rewrite`; new env var or flag → `/pb-env-check`. Step 8 executes these (via `/pb-check`) plus a cross-model Codex review. A billing slice without `/pb-cso --diff` in the plan is an incomplete plan.
+- **Specialist review, routed by what the change touches** → don't hand-pick a generic pass; read the project's `CLAUDE.md` trigger table and the areas the slices will touch, and add the matching review as a **mandatory** plan line: `src/lib/{ai,billing,auth}/` → `/pb-cso --diff`; `.tsx`/`.css`/tailwind → `/pb-design-review`; `marketing`/`landing`/user-facing copy → `/pb-copy --mode rewrite`; new env var or flag → `/pb-env-check`. Step 8 executes these (via `/pb-check`) plus a cross-model frontier review (step 8b). A billing slice without `/pb-cso --diff` in the plan is an incomplete plan.
 
 **Taste test (augmentation vs automation).** For each behavior, decide: is the correct result quantifiable, or does it need human judgment (taste)? Apply the 80/20 rule — automate the check only when an 80%-correct result is acceptable for that behavior. Copy, visual polish, and tone are taste calls: plan a human look, not a brittle assertion that encodes one person's preference. Forcing taste into automation is how you accrue AI-slop and operational debt. Mark each behavior `auto` or `human-review` in the plan.
 
@@ -99,7 +99,12 @@ Two passes, deliberately diverse. Don't re-implement what the suite already does
 
 **8a. Suite breadth — `/pb-check`.** Run `/pb-check` over the diff. It fans out the same-model reviewers the verification plan routed to — `/pb-review` always, plus `/pb-design-review` (UI), `/pb-cso --diff` (security-sensitive paths), `/pb-qa` (if a URL was given) — aggregates them under one severity model, and appends recurring patterns to `.claude/lessons.md`. This is the breadth pass: many lenses, one model.
 
-**8b. Cross-model depth — Codex review.** Tests and same-model review both inherit the author's blind spots. So hand the diff to a different model: dispatch a **Codex review** of the branch diff (vs the merge base) via the `codex` review agent, with the spec (`.context/spec-<slug>.md`) and risk bucket as context, asked specifically for correctness bugs, missing edge cases, and security/scope issues the tests assume away. Independence from the Claude agents that wrote *and* reviewed the slices is the point.
+**8b. Cross-model depth.** Tests and same-model review both inherit the author's blind spots. So hand the diff to a reviewer from a **different model family than the one driving this session**, always at the **frontier tier** of that family — never a mid-tier model:
+
+- Claude-driven session → Codex review via the `codex` review agent, on its frontier model (the CLI default when that is the top tier; pin `-m` only to *upgrade*, never to downgrade)
+- Codex-driven session → Claude review via `claude -p` on the frontier model (`claude --model claude-fable-5`; fall back to the top Opus only if Fable is unavailable)
+
+Dispatch the review of the branch diff (vs the merge base) with the spec (`.context/spec-<slug>.md`) and risk bucket as context, asked specifically for correctness bugs, missing edge cases, and security/scope issues the tests assume away. Independence from the agents that wrote *and* reviewed the slices is the point. Record the **resolved model id** in the report — a cross-model run on a mid-tier model does not satisfy the gate.
 
 Triage every finding from both passes through the suite severity model — do not paste raw output:
 
@@ -107,7 +112,7 @@ Triage every finding from both passes through the suite severity model — do no
 - **IMPORTANT** — surface with your assessment; ask before acting (taste / completeness call).
 - **NIT** — mention once; fix only if asked.
 
-A reviewer (suite or Codex) is not an oracle: discard findings that are wrong or out of scope, but say *why* — don't silently drop one you can't refute. If Codex is unavailable, say so in the report and note the cross-model pass did not run; `/pb-check` still ran, so review did not collapse to nothing.
+A reviewer (suite or cross-model) is not an oracle: discard findings that are wrong or out of scope, but say *why* — don't silently drop one you can't refute. If the other family's CLI is unavailable, say so in the report and note the cross-model pass did not run; `/pb-check` still ran, so review did not collapse to nothing.
 
 ### 9. Report
 
@@ -121,7 +126,7 @@ Slices/agents:  N slices in W waves (one /pb-tdd agent each) — <P parallel, S 
 Per slice:      <slice id → mode → first-red test → gate>, one line each
 Implementation: <files changed, line counts>
 Verify result:  auto=<all green?>  human-review=<surfaced items>
-Review:         pb-check=<blockers/important/nits + which sub-reviews ran>  codex=<…, or "unavailable">
+Review:         pb-check=<blockers/important/nits + which sub-reviews ran>  crossmodel=<resolved model id: findings, or "unavailable">
 Gate:           lint=<...> typecheck=<...> build=<...> tests=<...>
 Open questions: <unresolved spec ambiguities, or none>
 ```
@@ -149,8 +154,8 @@ If this implementation followed a shape you'll repeat (same setup, same checks, 
 - **Parallel write collisions.** Two sub-agents editing the same file race and clobber. Partition by file before dispatching; `--no-parallel` when partitions overlap. Reads can overlap freely; writes cannot.
 - **Agent skips RED.** A slice agent that writes code first and a passing test after has not done TDD — it has written a test that can never have caught the bug. Require each agent to report the first failing test and *why* it failed; a slice with no recorded RED is re-dispatched, not accepted.
 - **Orchestrator implements inline.** The temptation on a "quick" slice is to just write it in the main loop and skip the agent. That erodes the per-slice contract the moment it's convenient. Inline is allowed only for a single trivially small slice — more than one slice means agents, every time.
-- **Codex review rubber-stamped or pasted raw.** The review is verification, not decoration. Dumping Codex's output verbatim, or accepting "looks good" without reading it, defeats the cross-model check. Triage every finding through the severity model, fix real BLOCKERs test-first, and state why anything dismissed was dismissed — a finding you can't refute is a finding you act on.
-- **Skipping the routed specialist review.** A billing diff that gets only `/pb-review` and Codex, but no `/pb-cso --diff`, was under-reviewed — the security lens the suite already has for that path never ran. The verification plan routes by what the change touches (step 3); `/pb-check` then runs those reviews. Don't quietly drop one because the slice "looked fine."
+- **Cross-model review rubber-stamped or pasted raw.** The review is verification, not decoration. Dumping the other model's output verbatim, or accepting "looks good" without reading it, defeats the cross-model check. Triage every finding through the severity model, fix real BLOCKERs test-first, and state why anything dismissed was dismissed — a finding you can't refute is a finding you act on.
+- **Skipping the routed specialist review.** A billing diff that gets only `/pb-review` and the cross-model pass, but no `/pb-cso --diff`, was under-reviewed — the security lens the suite already has for that path never ran. The verification plan routes by what the change touches (step 3); `/pb-check` then runs those reviews. Don't quietly drop one because the slice "looked fine."
 - **Re-deriving instead of routing.** Hand-rolling a security check, a debugging loop, or a learning note inside this command duplicates `/pb-cso`, `/pb-investigate`, `/pb-evolve` — and drifts from them the moment one changes. Call the skill; if it's missing something, improve that skill.
 - **Automating taste.** Encoding "the button should feel right" as a pixel assertion produces a brittle test that fails on every legitimate change and passes things that look wrong. If the right answer needs a human eye, mark it `human-review` and show evidence — don't fake a green check.
 - **Strict gate skipped because "it's a small change".** Risk is blast radius, not diff size. A two-line change to a billing or auth path is still strict. The gate fires on the bucket, never on line count.
