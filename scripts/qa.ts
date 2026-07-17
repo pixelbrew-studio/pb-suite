@@ -124,9 +124,19 @@ async function checkRoute(
   const pageErrorHandler = (err: Error) => {
     findings.push({ severity: "blocker", category: "page-error", detail: err.message });
   };
+  // Catch failed XHR/API/subresource responses (and the main document) directly.
+  // Redirects (3xx) classify to null and are ignored; favicon/.map/4xx-auth are
+  // downgraded inside classifyHttpError.
+  const responseHandler = (res: { status(): number; url(): string }) => {
+    const severity = classifyHttpError(res.status(), res.url());
+    if (severity) {
+      findings.push({ severity, category: "http-error", detail: `${res.status()} ${res.url()}` });
+    }
+  };
 
   page.on("console", consoleHandler);
   page.on("pageerror", pageErrorHandler);
+  page.on("response", responseHandler);
 
   const t0 = Date.now();
   const url = new URL(path, baseUrl).toString();
@@ -139,15 +149,6 @@ async function checkRoute(
     status = response?.status() ?? 0;
     finalUrl = page.url();
     title = await page.title();
-
-    const httpSeverity = classifyHttpError(status, finalUrl);
-    if (httpSeverity) {
-      findings.push({
-        severity: httpSeverity,
-        category: "http-error",
-        detail: `${status} ${finalUrl}`,
-      });
-    }
 
     const brokenImages = await page.$$eval("img", (imgs) =>
       imgs
@@ -168,6 +169,7 @@ async function checkRoute(
 
   page.off("console", consoleHandler);
   page.off("pageerror", pageErrorHandler);
+  page.off("response", responseHandler);
 
   let screenshot: string | null = null;
   if (!args.noScreenshots) {
