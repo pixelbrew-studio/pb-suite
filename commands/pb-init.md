@@ -38,6 +38,7 @@ Check each of the following. Skip items that are already in place.
 | `.gitignore` has `.pb-qa/` | grep -q '^\.pb-qa/' .gitignore |
 | `.gitignore` has `.pb-design-review/` | grep -q '^\.pb-design-review/' .gitignore |
 | `.gitignore` has `.pb-browse/` | grep -q '^\.pb-browse/' .gitignore |
+| `.gitignore` has `.pb-roast/` | grep -q '^\.pb-roast/' .gitignore |
 | `.claude/lessons.md` exists | test -f .claude/lessons.md |
 | `.claude/incidents.md` exists | test -f .claude/incidents.md |
 | `CLAUDE.md` exists | test -f CLAUDE.md |
@@ -49,6 +50,7 @@ pb-init: $ROOT
   .gitignore: .pb-qa/             [present | missing]
   .gitignore: .pb-design-review/  [present | missing]
   .gitignore: .pb-browse/         [present | missing]
+  .gitignore: .pb-roast/          [present | missing]
   .claude/lessons.md              [present | missing]
   .claude/incidents.md            [present | missing]
   CLAUDE.md                       [present | missing]
@@ -143,7 +145,7 @@ Do not pre-fill the placeholders. The user fills them in after pb-init exits.
 ```
 pb-init: <repo>
   Added:
-    - .gitignore: .pb-qa/, .pb-design-review/, .pb-browse/
+    - .gitignore: .pb-qa/, .pb-design-review/, .pb-browse/, .pb-roast/
     - .claude/lessons.md
     - .claude/incidents.md
     - CLAUDE.md (scaffold)
