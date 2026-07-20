@@ -71,6 +71,7 @@ Triggers — apply unless the user explicitly opts out:
 | Touching files under `src/lib/ai/`, `src/lib/billing/`, `src/lib/auth/` | `/pb-cso --diff` before opening a PR |
 | Touching UI files (`.tsx`, `.css`, tailwind config) | `/pb-design-review` before opening a PR |
 | Touching `marketing/`, `landing/`, user-facing copy | `/pb-copy --mode rewrite` before opening a PR |
+| Need an outside voice on a website, file, dir, diff, PR, or pitch | `/pb-roast <target>` — cross-model roast via OpenCode (Grok default) |
 | Touching `marketing/`, `landing/`, or SEO pages (discoverability, not just tone) | `/pb-pop <url\|file>` before opening a PR — score for search / AI citability |
 | Debugging a reproducible bug | `/pb-investigate` before editing — no fix without root cause |
 | Drafting a PR | `/pb-pr` (refuse `--no-verify` and `--force`) |
