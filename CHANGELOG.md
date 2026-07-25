@@ -2,6 +2,11 @@
 
 Notable changes to pb-suite. Follows semver, written newest-first.
 
+## 0.9.3
+
+- `/pb-ship` preflight verifies that every required status check can still be produced, comparing the branch ruleset's `required_status_checks` against the job `name:` values in `.github/workflows/*.yml`. Renaming or folding a CI job orphans its context: the check can never report, so every PR blocks indefinitely on "Expected — waiting for status" while the symptom points nowhere near the cause. Report-only, since the repair is a ruleset write. Also records that `repos/:owner/:repo/branches/<b>/protection` returns 404 on a ruleset-protected repo — which reads as "unprotected" and is wrong — and that a ruleset `PUT` payload should be built from the live response so sibling rules survive the write.
+- `/pb-review` gains four checks promoted from recurring lessons via `/pb-evolve`: a fallback or default value reused as the value that authorizes persistence, retention, or secret release (a normalized-away classification, a `.catch()` default, an empty string a language treats as falsy); a hash, cache, or idempotency key built from user-controlled strings joined by a forgeable separator, where the test that matters is the embedded-delimiter near-miss rather than field-sensitivity; code ported from a sibling app or package, where swapping identifiers is necessary but never sufficient because a port carries the source's risk model rather than the target's; and a contract file that the diff contradicts, or that asserts an active capability with nothing naming the artifact that proves it.
+
 ## 0.9.2
 
 - `/pb-implement` and `/pb-ship` can use OpenCode with an explicitly pinned frontier-tier GLM or Grok model when the preferred Claude/Codex cross-model reviewer is unavailable. The fallback preserves model-family independence, records the resolved `provider/model` id, and keeps strict work blocked when the configured model is missing, mid-tier, or from the authoring family.

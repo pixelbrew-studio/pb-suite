@@ -45,6 +45,27 @@ case " $ARGUMENTS " in
 esac
 ```
 
+Verify every required status check can still be produced. A renamed or folded CI job orphans its ruleset context: the check can never report, so every PR blocks forever on "Expected — waiting for status" and the symptom points nowhere near the cause. Report, do not fail — the fix is a ruleset write, which is the user's call:
+
+```bash
+RS=$(gh api repos/:owner/:repo/rulesets --jq '.[] | select(.target=="branch") | .id' 2>/dev/null | head -1)
+if [ -n "$RS" ]; then
+  gh api "repos/:owner/:repo/rulesets/$RS" \
+    --jq '.rules[] | select(.type=="required_status_checks")
+          | .parameters.required_status_checks[].context' 2>/dev/null > /tmp/pb-required.txt
+  grep -rhE '^\s{4}name:' .github/workflows/*.yml 2>/dev/null | sed 's/^ *name: *//' > /tmp/pb-jobs.txt
+  while IFS= read -r ctx; do
+    [ -z "$ctx" ] && continue
+    # Deploy-platform and bot contexts are posted by external apps, not job names.
+    case "$ctx" in Vercel*|*Preview*|*"Agent Review"*) continue;; esac
+    grep -Fqx "$ctx" /tmp/pb-jobs.txt ||
+      echo "pb-ship: required check '$ctx' matches no job name in .github/workflows — merges will block forever"
+  done < /tmp/pb-required.txt
+fi
+```
+
+Use the ruleset API, not `repos/:owner/:repo/branches/<b>/protection` — the classic endpoint 404s on a ruleset-protected repo, which reads as "unprotected" and is wrong. When repairing a ruleset, build the `PUT` payload from the live `gh api repos/:owner/:repo/rulesets/<id>` response so the other rules survive the write.
+
 Find the PR for the current branch:
 
 ```bash

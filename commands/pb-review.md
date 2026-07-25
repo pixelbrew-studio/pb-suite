@@ -49,14 +49,17 @@ Run in order. Stop early if a finding warrants discussion before continuing.
 **Correctness**
 - Off-by-one, null/undefined deref, missing `await`, wrong comparison operator
 - Race conditions on shared state, double-spend on retried operations
+- A hash, cache, or idempotency key built from two or more user-controlled strings joined by a separator (`\n`, `:`, a raw control byte). The separator is forgeable and the collision is cross-tenant. Require a delimited encoding — `JSON.stringify` of fixed keys, or length-prefixing. The test that matters is the embedded-delimiter near-miss (`"a\nb"+"c"` vs `"a"+"b\nc"`), not field-sensitivity; a suite that only asserts "different field → different key" passes while the collision is live
 - Swallowed errors, error returned but never checked
 - Type lies — `as any`, unchecked casts, `@ts-ignore` without a reason in the comment
+- Code ported from a sibling app or package: audit every guard, link, RLS policy, fallback branch, and safety clause against a capability the target may not have. Swapping identifiers is necessary, never sufficient — a port carries the source's risk model, not the target's
 
 **Safety** (diff-level quick wins — for deep audit run `/pb-cso --diff`)
 - SQL built by string concatenation instead of parameterized
 - Untrusted input flowing into `eval`, `exec`, `dangerouslySetInnerHTML`, shell commands
 - Secrets in code, logs, or error messages introduced by this diff
 - Missing auth check on a new route that handles user data
+- A fallback or default value reused as the value that authorizes something. A default may keep a flow available; it must not decide persistence, retention, or secret release. Check that `unknown` is represented separately from `accepted` (a normalized-away classification, a `.catch()` default, an empty string that a language treats as falsy), and that a swallowed failure cannot return success over a broken guarantee
 
 **Completeness**
 - New function, route, or branch with no test covering it
@@ -71,6 +74,7 @@ Run in order. Stop early if a finding warrants discussion before continuing.
 - Magic numbers or strings without context
 - A status/enum string literal consumed in 3+ files with no shared union/const — the next rename leaves a writer, reader, guard, or DB constraint silently behind
 - Comments that contradict the code
+- A contract file (`CLAUDE.md`, `AGENTS.md`, README, a `rules/` doc) that this diff contradicts, or that asserts an active capability with nothing naming the artifact that proves it — a log line, an env var, a 1Password item. Fix the doc in the same diff; an unverified capability claim in a contract file gets read as fact for months
 
 ### 4. Categorize and act
 
