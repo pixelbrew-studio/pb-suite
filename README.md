@@ -124,7 +124,9 @@ Two limits worth stating plainly:
 - **It is a seatbelt, not a sandbox.** A regex denylist stops an accident. It does not stop a determined agent: `python -c "shutil.rmtree(...)"` or a base64'd script walks straight past it.
 - **It fails open.** No `jq`, or no patterns file, means every command is allowed. A guard that hard-blocks the moment a dependency goes missing gets uninstalled the same day.
 
-Adding a pattern: write POSIX ERE (`grep -E`), use `[[:space:]]` rather than `\s`, and add both a block case and an allow case to the guard section of `tests/smoke.sh` before committing. The allow cases are what keep the guard usable.
+Known over-block: `git push --dry-run --force` is blocked. Excluding it needs a negative lookahead that POSIX ERE does not have, and the command is rare enough that the false positive is cheaper than the machinery.
+
+Adding a pattern: write POSIX ERE (`grep -E`), use `[[:space:]]` rather than `\s`, allow an optional `([A-Za-z0-9._/-]*/)?` path prefix so `/bin/rm` is caught alongside `rm`, and add both a block case and an allow case to the guard section of `tests/smoke.sh` before committing. The allow cases are what keep the guard usable.
 
 Codex is not wired automatically. Add the same entry to `~/.codex/hooks.json`:
 
