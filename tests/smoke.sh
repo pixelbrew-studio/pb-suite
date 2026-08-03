@@ -254,6 +254,19 @@ assert "VERSION is semver with a matching CHANGELOG entry ($VER)" "$?"
 grep -q '^## 0\.5\.0' CHANGELOG.md && grep -q '^## 0\.4\.0' CHANGELOG.md && grep -q '^## 0\.1\.0' CHANGELOG.md
 assert "CHANGELOG has 0.5.0, 0.4.0, 0.1.0 entries" "$?"
 
+# The assertion above only proves the version appears SOMEWHERE. It passes while
+# VERSION lags behind several released sections — which is exactly the drift that
+# left 0.9.3 tagged with five shipped entries sitting under Unreleased.
+TOP_VER=$(grep -E '^## [0-9]+\.[0-9]+\.[0-9]+$' CHANGELOG.md | head -1 | sed 's/^## //')
+[ "$TOP_VER" = "$VER" ]
+assert "VERSION matches the newest CHANGELOG section (VERSION=$VER, top=$TOP_VER)" "$?"
+
+# A stacked branch that renames Unreleased while its base already renamed it
+# produces two identical headings, and the entries silently split across them.
+DUPE=$(grep -E '^## [0-9]+\.[0-9]+\.[0-9]+$' CHANGELOG.md | sort | uniq -d | tr '\n' ' ')
+[ -z "$DUPE" ]
+assert "CHANGELOG has no duplicate version headings${DUPE:+ (found: $DUPE)}" "$?"
+
 # --- Section: 0.4.0 CIL integration ---
 
 echo "[CIL integration]"
@@ -570,6 +583,26 @@ assert "pb-pr staging rule stays read-only" "$?"
 
 grep -q 'Do not stage anything' commands/pb-pr.md
 assert "pb-pr keeps its no-staging guarantee in prepare mode" "$?"
+
+# A merged PR still answers `gh pr checks` green, so a gate run against one
+# looks like it passed — for a commit you are no longer on.
+grep -q 'state: MERGED' commands/pb-ship.md
+assert "pb-ship preflight detects an already-merged PR" "$?"
+
+grep -q 'headRefOid' commands/pb-ship.md
+assert "pb-ship compares local HEAD against the PR head" "$?"
+
+# The guard is an absolute path; move the checkout and it stays listed but inert.
+grep -q 'WIRED BUT INERT' commands/pb.md
+assert "pb reports a wired-but-inert command guard" "$?"
+
+# A foreground cross-model call dies on the tool timeout, and the usual recovery
+# is to shrink the prompt — trading review depth for a call that returns.
+grep -q 'Dispatch it in the background' commands/pb-implement.md
+assert "pb-implement backgrounds the cross-model pass" "$?"
+
+grep -q 'Dispatch it in the background' commands/pb-ship.md
+assert "pb-ship backgrounds the cross-model pass" "$?"
 
 grep -q '/pb-decisions' README.md
 assert "README lists /pb-decisions" "$?"

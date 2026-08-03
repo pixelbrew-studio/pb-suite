@@ -67,13 +67,23 @@ fi
 
 Use the ruleset API, not `repos/:owner/:repo/branches/<b>/protection` — the classic endpoint 404s on a ruleset-protected repo, which reads as "unprotected" and is wrong. When repairing a ruleset, build the `PUT` payload from the live `gh api repos/:owner/:repo/rulesets/<id>` response so the other rules survive the write.
 
-Find the PR for the current branch:
+Find the PR for the current branch, and check its **state**, not just its existence:
 
 ```bash
-gh pr view --json number,url,title,body 2>/dev/null
+gh pr view --json number,url,title,body,state,mergedAt,headRefOid 2>/dev/null
 ```
 
-If no PR: stop and tell the user to open one first. `pb-ship` is not for un-PR'd work.
+- **No PR** → stop and tell the user to open one first. `pb-ship` is not for un-PR'd work.
+- **`state: MERGED`** → stop. There is no gate left to run: the change is on the base branch and every check from here reports on work that already landed. Say so plainly, and say what the local commits ahead of the PR head are — they are unmerged work needing their own branch and PR, not part of this one.
+- **`state: CLOSED`** (not merged) → stop. A closed PR does not sync new pushes, so anything committed since is invisible to it. Reopen it or open a new one.
+
+```bash
+git rev-parse HEAD                 # compare against headRefOid above
+```
+
+A local `HEAD` ahead of `headRefOid` means the PR does not contain your latest commits. On an open PR, push. On a merged one, those commits need a new branch — and any check that came back green belongs to the PR head, not to what is in front of you.
+
+This is the failure that reads as success: a merged PR still answers `gh pr checks` with a green result, so a gate run against it looks like it passed. It passed for a commit you are no longer on.
 
 ### 2. pb-review
 
@@ -82,6 +92,8 @@ Invoke `pb-review`. Wait for completion. Read the BLOCKER count from its report.
 If `BLOCKER ≥ 1`: stop here. Surface the findings. Do not run verify. Do not prompt for merge.
 
 **Strict-bucket diffs require a completed cross-model review.** If the diff matches the repo's strict risk bucket or its `pb-suite: load-bearing files` globs, a cross-model review must be on record before the gate: a review of this branch diff by a **frontier-tier model from a different family than the one that authored it** (Claude-authored → Codex frontier; Codex-authored → Claude frontier, `claude --model claude-fable-5`), with its findings triaged. No such pass, or a pass run on a mid-tier model → treat as a BLOCKER: run it now (as `pb-implement` step 8b does) before proceeding. Same-model review plus passing tests share the author's blind spots by construction — on strict diffs this pass is the gate, not polish.
+
+Dispatch it in the background and read the result before the gate — these reviews run past ten minutes on a real diff, and trimming the prompt to fit a foreground timeout trades depth for a call that returns.
 
 A pass run on a checklist prompt does not count either. Hand the reviewer the diff and what the change is for, then ask what is wrong with it; enumerating the failure modes to check returns findings in those categories and nothing outside them, which looks like a clean review and is not one. Where to look is fair context, what to find is not.
 

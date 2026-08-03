@@ -42,6 +42,22 @@ In one block, print what is detected:
 - Does `CLAUDE.md` declare load-bearing files? (`## pb-suite: load-bearing files` present)
 - Are `.claude/lessons.md` / `.claude/incidents.md` opted in?
 - Detected stack (one line from `package.json` / `pyproject.toml` / `go.mod` etc.)
+- Command guard status (see below)
+
+### 4b. Command guard status
+
+The guard is an absolute path recorded in `settings.json`. Move, rename, or delete the checkout it points at and the hook stays listed while blocking nothing — installed, visible, inert. Nothing surfaces that on its own, so report it here:
+
+```bash
+GUARD=$(jq -r '[.hooks.PreToolUse[]? | select(.matcher == "Bash") | .hooks[]?.command]
+               | map(select(test("deny-dangerous")))[0] // empty' ~/.claude/settings.json 2>/dev/null)
+```
+
+- Empty → `command guard: not wired (./install --hooks to enable)`
+- Set, and the file is executable, and `printf '{"tool_input":{"command":"rm -rf /"}}' | "$GUARD"` exits 2 → `command guard: active`
+- Set but the path is missing, not executable, or the probe does not exit 2 → `command guard: WIRED BUT INERT — <path>`. Flag it; this is the state that looks protected and is not.
+
+Codex is wired separately in `~/.codex/hooks.json` and pins trust by hash, so a listed entry there can still be skipped until re-trusted with `/hooks`. Report its presence, and say that presence alone does not prove it runs.
 
 ### 5. Next step
 

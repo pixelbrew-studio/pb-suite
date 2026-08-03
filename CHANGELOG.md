@@ -2,6 +2,13 @@
 
 Notable changes to pb-suite. Follows semver, written newest-first.
 
+## Unreleased
+
+- `/pb-ship` preflight reads the PR's state, not just its existence. A merged PR still answers `gh pr checks` with a green result, so a gate run against one looks like it passed — for a commit you are no longer on. MERGED and CLOSED now stop the run and say what the local commits ahead of the PR head are: unmerged work needing its own branch, not part of that PR. Promoted from a real miss, where a full review ran against a PR that had already merged and the green check belonged to the previous commit.
+- Two CHANGELOG assertions. The existing check only proved `VERSION` appeared somewhere in the file, which passes while the version lags several released sections behind — the drift that left 0.9.3 tagged with five shipped entries under `Unreleased`. `VERSION` must now equal the newest version heading, and no version heading may appear twice, which a stacked branch produces when its base has already renamed `Unreleased`.
+- `/pb` reports command-guard status. The hook is an absolute path in `settings.json`; move or rename the checkout and it stays listed while blocking nothing. `WIRED BUT INERT` is called out specifically, since that is the state that looks protected and is not. Codex presence is reported with the caveat that its hash-pinned trust means a listed entry can still be skipped.
+- `/pb-implement` step 8b and `/pb-ship` step 2 dispatch the cross-model review in the background. A frontier review of a real diff runs past ten minutes; a foreground call dies on the tool timeout, and the usual recovery is to shrink the prompt until it fits, trading review depth for a call that returns.
+
 ## 0.11.0
 
 - `/pb-decisions --now` completes the command's timeline: `--now` before anything is built, `--next` while choices are open, default after the work is done. It answers instantly and reads nothing — no files, no commands, no search. The no-tool constraint is the feature: a researched version arrives after the user has moved on, by which point the shape is being defended rather than chosen. Names 1-3 consequential choices with a gut recommendation each, where consequential means materially different work or expensive to undo, then stops. Being wrong fast is the intended failure mode; the user corrects a gut call in one line.
