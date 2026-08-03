@@ -9,52 +9,62 @@
 # commands (`rm -rf node_modules`, `git clean -fdx`, `docker system prune`) stay
 # ALLOWED — over-blocking trains you to disable the guard, which is worse than
 # not having one.
+#
+# Two conventions repeated below, both there to close bypasses:
+#   ([A-Za-z0-9._/-]*/)?   an absolute or relative path prefix, so `/bin/rm`
+#                          is caught alongside `rm`
+#   (--|-[a-zA-Z]+|--[a-z-]+)  an option token, including the bare `--`
+#                              end-of-options marker
 
 # 1. rm aimed at root, the whole home folder, or the whole /Users tree
-(^|[;&|[:space:]])rm[[:space:]]+((-[a-zA-Z]+|--[a-z-]+)[[:space:]]+)*["']?/["']?[[:space:]]*($|[;&|])
-(^|[;&|[:space:]])rm[[:space:]]+((-[a-zA-Z]+|--[a-z-]+)[[:space:]]+)*["']?/\*
-(^|[;&|[:space:]])rm[[:space:]]+((-[a-zA-Z]+|--[a-z-]+)[[:space:]]+)*["']?(~|\$HOME|\$\{HOME\})/?["']?[[:space:]]*($|[;&|])
-(^|[;&|[:space:]])rm[[:space:]]+((-[a-zA-Z]+|--[a-z-]+)[[:space:]]+)*["']?(~|\$HOME|\$\{HOME\})/\*
-(^|[;&|[:space:]])rm[[:space:]]+((-[a-zA-Z]+|--[a-z-]+)[[:space:]]+)*["']?/Users(/[^/[:space:]"']+)?/?["']?[[:space:]]*($|[;&|])
+(^|[;&|[:space:]])([A-Za-z0-9._/-]*/)?rm[[:space:]]+((--|-[a-zA-Z]+|--[a-z-]+)[[:space:]]+)*["']?/["']?[[:space:]]*($|[;&|])
+(^|[;&|[:space:]])([A-Za-z0-9._/-]*/)?rm[[:space:]]+((--|-[a-zA-Z]+|--[a-z-]+)[[:space:]]+)*["']?/\*
+(^|[;&|[:space:]])([A-Za-z0-9._/-]*/)?rm[[:space:]]+((--|-[a-zA-Z]+|--[a-z-]+)[[:space:]]+)*["']?(~|\$HOME|\$\{HOME\})/?["']?[[:space:]]*($|[;&|])
+(^|[;&|[:space:]])([A-Za-z0-9._/-]*/)?rm[[:space:]]+((--|-[a-zA-Z]+|--[a-z-]+)[[:space:]]+)*["']?(~|\$HOME|\$\{HOME\})/\*
+(^|[;&|[:space:]])([A-Za-z0-9._/-]*/)?rm[[:space:]]+((--|-[a-zA-Z]+|--[a-z-]+)[[:space:]]+)*["']?/Users(/[^/[:space:]"']+)?/?["']?[[:space:]]*($|[;&|])
 --no-preserve-root
 
 # 2. disk destroyers (writing to raw disks, formatting, erasing)
-(^|[;&|[:space:]])dd[[:space:]][^;&|]*of=["']?/dev/
+(^|[;&|[:space:]])([A-Za-z0-9._/-]*/)?dd[[:space:]][^;&|]*of=["']?/dev/
 >[[:space:]]*/dev/(r?disk|sd[a-z]|nvme)
-(^|[;&|[:space:]])mkfs(\.[A-Za-z0-9]+)?([[:space:]]|$)
-(^|[;&|[:space:]])diskutil[[:space:]]+(erase[A-Za-z]*|partitionDisk|zeroDisk|secureErase|apfs[[:space:]]+(delete|erase)[A-Za-z]*)
+(^|[;&|[:space:]])([A-Za-z0-9._/-]*/)?mkfs(\.[A-Za-z0-9]+)?[[:space:]]+[^-]
+(^|[;&|[:space:]])([A-Za-z0-9._/-]*/)?diskutil[[:space:]]+(erase[A-Za-z]*|partitionDisk|zeroDisk|secureErase|apfs[[:space:]]+(delete|erase)[A-Za-z]*)
 
 # 3. deleting with admin power
-(^|[;&|[:space:]])sudo[[:space:]]+(-[a-zA-Z]+[[:space:]]+)*rm([[:space:]]|$)
+(^|[;&|[:space:]])([A-Za-z0-9._/-]*/)?sudo[[:space:]]+(-[a-zA-Z]+[[:space:]]+)*([A-Za-z0-9._/-]*/)?rm([[:space:]]|$)
 
 # 4. fork bomb (freezes the machine)
 :\(\)[[:space:]]*\{[[:space:]]*:[[:space:]]*\|[[:space:]]*:[[:space:]]*&[[:space:]]*\}[[:space:]]*;[[:space:]]*:
 
 # 5. piping the internet straight into a shell
-(^|[;&|[:space:]])(curl|wget)[[:space:]][^;&|]*\|[[:space:]]*(sudo[[:space:]]+)?(ba|z|da)?sh([[:space:]]|$)
+(^|[;&|[:space:]])([A-Za-z0-9._/-]*/)?(curl|wget)[[:space:]][^;&|]*\|[[:space:]]*(sudo[[:space:]]+)?([A-Za-z0-9._/-]*/)?(ba|z|da)?sh([[:space:]]|$)
 
 # 6. rewriting remote git history (--force-with-lease stays allowed)
 #    pb-review, pb-pr, and pb-ship all refuse --force in their own procedures;
 #    this is the layer that enforces it instead of asking the model to comply.
-(^|[;&|[:space:]])git[[:space:]]+push[^;&|]*[[:space:]](-f|--force)([[:space:]]|$)
-(^|[;&|[:space:]])git[[:space:]]+push[^;&|]*[[:space:]]\+[A-Za-z0-9._/-]
+#    The option group after `git` catches `git -C <path> push --force`.
+#    Known over-block: `git push --dry-run --force` is blocked too. Excluding it
+#    needs a negative lookahead, which POSIX ERE does not have, and the command
+#    is rare enough that the false positive is cheaper than the machinery.
+(^|[;&|[:space:]])([A-Za-z0-9._/-]*/)?git([[:space:]]+-[^[:space:]]+([[:space:]]+[^-][^[:space:]]*)?)*[[:space:]]+push[^;&|]*[[:space:]](-f|--force)([[:space:]]|$)
+(^|[;&|[:space:]])([A-Za-z0-9._/-]*/)?git([[:space:]]+-[^[:space:]]+([[:space:]]+[^-][^[:space:]]*)?)*[[:space:]]+push[^;&|]*[[:space:]]\+[A-Za-z0-9._/-]
 
 # 6b. deleting remote branches/tags (git push --delete, -d, or ":branch" refspec)
-(^|[;&|[:space:]])git[[:space:]]+push[^;&|]*[[:space:]](--delete|-d)([[:space:]]|$)
-(^|[;&|[:space:]])git[[:space:]]+push[^;&|]*[[:space:]]:[A-Za-z0-9._/-]
+(^|[;&|[:space:]])([A-Za-z0-9._/-]*/)?git([[:space:]]+-[^[:space:]]+([[:space:]]+[^-][^[:space:]]*)?)*[[:space:]]+push[^;&|]*[[:space:]](--delete|-d)([[:space:]]|$)
+(^|[;&|[:space:]])([A-Za-z0-9._/-]*/)?git([[:space:]]+-[^[:space:]]+([[:space:]]+[^-][^[:space:]]*)?)*[[:space:]]+push[^;&|]*[[:space:]]:[A-Za-z0-9._/-]
 
 # 7. breaking permissions/ownership on the whole system
-(^|[;&|[:space:]])chmod[[:space:]][^;&|]*777[[:space:]]+["']?/["']?[[:space:]]*($|[;&|])
-(^|[;&|[:space:]])chown[[:space:]]+-R[^;&|]*[[:space:]]+/["']?[[:space:]]*($|[;&|])
+(^|[;&|[:space:]])([A-Za-z0-9._/-]*/)?chmod[[:space:]][^;&|]*777[[:space:]]+["']?/["']?[[:space:]]*($|[;&|])
+(^|[;&|[:space:]])([A-Za-z0-9._/-]*/)?chown[[:space:]]+-R[^;&|]*[[:space:]]+/["']?[[:space:]]*($|[;&|])
 
 # 8. destroying the reflog safety net (makes local history rewrites unrecoverable)
-(^|[;&|[:space:]])git[[:space:]]+reflog[[:space:]]+expire[^;&|]*--expire(-unreachable)?(=|[[:space:]]+)now
-(^|[;&|[:space:]])git[[:space:]]+gc[^;&|]*--prune(=|[[:space:]]+)(now|all)
+(^|[;&|[:space:]])([A-Za-z0-9._/-]*/)?git[[:space:]]+reflog[[:space:]]+expire[^;&|]*--expire(-unreachable)?(=|[[:space:]]+)now
+(^|[;&|[:space:]])([A-Za-z0-9._/-]*/)?git[[:space:]]+gc[^;&|]*--prune(=|[[:space:]]+)(now|all)
 
 # 9. GitHub CLI (gh): irreversible or account-level destruction + token exfil
-(^|[;&|[:space:]])gh[[:space:]]+repo[[:space:]]+delete([[:space:]]|$)
-(^|[;&|[:space:]])gh[[:space:]]+release[[:space:]]+delete([[:space:]]|$)
-(^|[;&|[:space:]])gh[[:space:]]+(secret|ssh-key|gpg-key)[[:space:]]+delete([[:space:]]|$)
-(^|[;&|[:space:]])gh[[:space:]]+api[[:space:]][^;&|]*(-X|--method)(=|[[:space:]]+)(DELETE|delete)
-(^|[;&|[:space:]])gh[[:space:]]+repo[[:space:]]+edit[^;&|]*--visibility(=|[[:space:]]+)public
-(^|[;&|[:space:]])gh[[:space:]]+auth[[:space:]]+token([[:space:]]|$)
+(^|[;&|[:space:]])([A-Za-z0-9._/-]*/)?gh[[:space:]]+repo[[:space:]]+delete([[:space:]]|$)
+(^|[;&|[:space:]])([A-Za-z0-9._/-]*/)?gh[[:space:]]+release[[:space:]]+delete([[:space:]]|$)
+(^|[;&|[:space:]])([A-Za-z0-9._/-]*/)?gh[[:space:]]+(secret|ssh-key|gpg-key)[[:space:]]+delete([[:space:]]|$)
+(^|[;&|[:space:]])([A-Za-z0-9._/-]*/)?gh[[:space:]]+api[[:space:]][^;&|]*(-X|--method)(=|[[:space:]]+)(DELETE|delete)
+(^|[;&|[:space:]])([A-Za-z0-9._/-]*/)?gh[[:space:]]+repo[[:space:]]+edit[^;&|]*--visibility(=|[[:space:]]+)public
+(^|[;&|[:space:]])([A-Za-z0-9._/-]*/)?gh[[:space:]]+auth[[:space:]]+token([[:space:]]|$)

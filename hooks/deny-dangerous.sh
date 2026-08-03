@@ -14,6 +14,11 @@
 # An obfuscated equivalent (`python -c "shutil.rmtree(...)"`, a base64'd script)
 # walks straight past a regex denylist. Treat it accordingly.
 
+# Hooks do not inherit an interactive shell's PATH. Without this, a Homebrew jq
+# is invisible at hook time and the guard fails open on every command while
+# looking correctly installed.
+export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
+
 # Resolved next to this script, so the guard and its denylist can never drift
 # apart — a hook wired to a custom install path would otherwise look for the
 # patterns under $HOME, not find them, and silently allow everything.

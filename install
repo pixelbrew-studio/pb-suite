@@ -80,9 +80,12 @@ if [ "$WITH_HOOKS" -eq 1 ]; then
   chmod +x "$GUARD_SRC"
   [ -f "$SETTINGS_FILE" ] || echo '{}' > "$SETTINGS_FILE"
 
+  # The already-wired test is scoped to the Bash matcher. Checking the command
+  # alone would treat the guard attached to some other matcher as installed and
+  # silently never wire it to Bash, which is where it has to run.
   MERGED=$(jq --arg cmd "$GUARD_SRC" '
     .hooks //= {} | .hooks.PreToolUse //= []
-    | if [.hooks.PreToolUse[]?.hooks[]?.command] | index($cmd)
+    | if [.hooks.PreToolUse[]? | select(.matcher == "Bash") | .hooks[]?.command] | index($cmd)
       then .
       else .hooks.PreToolUse += [{matcher: "Bash", hooks: [{type: "command", command: $cmd}]}]
       end
@@ -100,7 +103,10 @@ if [ "$WITH_HOOKS" -eq 1 ]; then
   # re-run does not litter the directory with identical backups.
   if [ "$MERGED" != "$(cat "$SETTINGS_FILE")" ]; then
     cp "$SETTINGS_FILE" "$SETTINGS_FILE.bak.$stamp"
-    printf '%s\n' "$MERGED" > "$SETTINGS_FILE"
+    # Write via a temp file and rename, so an interrupted or failed write cannot
+    # leave the user with a truncated settings.json.
+    printf '%s\n' "$MERGED" > "$SETTINGS_FILE.tmp.$$"
+    mv "$SETTINGS_FILE.tmp.$$" "$SETTINGS_FILE"
     echo "pb-suite: command guard wired into $SETTINGS_FILE (backup: $SETTINGS_FILE.bak.$stamp)"
   else
     echo "pb-suite: command guard already wired into $SETTINGS_FILE"

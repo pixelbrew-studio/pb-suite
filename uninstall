@@ -47,7 +47,9 @@ if [ -f "$SETTINGS_FILE" ] && command -v jq >/dev/null 2>&1; then
       ]
     ' "$SETTINGS_FILE")
     if [ -n "$PRUNED" ]; then
-      printf '%s\n' "$PRUNED" > "$SETTINGS_FILE"
+      # Same atomic write as install: never truncate the live file in place.
+      printf '%s\n' "$PRUNED" > "$SETTINGS_FILE.tmp.$$"
+      mv "$SETTINGS_FILE.tmp.$$" "$SETTINGS_FILE"
       echo "pb-suite: command guard hook removed from $SETTINGS_FILE"
     fi
   fi
