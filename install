@@ -1,12 +1,25 @@
 #!/usr/bin/env bash
 # Install pb-suite commands into ~/.claude/commands/ as symlinks pointing to this repo.
 # Idempotent. Existing non-symlink files are backed up to <name>.bak.<timestamp>.
+#
+# --hooks additionally wires the command guard as a PreToolUse hook in
+# ~/.claude/settings.json. Opt-in: it is the only part of pb-suite that changes
+# how the agent runs rather than what it reads.
 
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 COMMANDS_DIR="$REPO_DIR/commands"
 TARGET_DIR="${CLAUDE_COMMANDS_DIR:-$HOME/.claude/commands}"
+SETTINGS_FILE="${CLAUDE_SETTINGS_FILE:-$HOME/.claude/settings.json}"
+
+WITH_HOOKS=0
+for arg in "$@"; do
+  case "$arg" in
+    --hooks) WITH_HOOKS=1 ;;
+    *) echo "error: unknown argument '$arg' (supported: --hooks)" >&2; exit 1 ;;
+  esac
+done
 
 if [ ! -d "$COMMANDS_DIR" ]; then
   echo "error: $COMMANDS_DIR not found" >&2
@@ -52,6 +65,48 @@ if [ -f "$BOOTSTRAP_SRC" ]; then
     { [ -e "$BOOTSTRAP_DST" ] || [ -L "$BOOTSTRAP_DST" ]; } && rm -f "$BOOTSTRAP_DST"
     ln -s "$BOOTSTRAP_SRC" "$BOOTSTRAP_DST"
   fi
+fi
+
+if [ "$WITH_HOOKS" -eq 1 ]; then
+  GUARD_SRC="$REPO_DIR/hooks/deny-dangerous.sh"
+  SETTINGS_DIR="$(dirname "$SETTINGS_FILE")"
+
+  if ! command -v jq >/dev/null 2>&1; then
+    echo "error: --hooks needs jq to merge into $SETTINGS_FILE (brew install jq)" >&2
+    exit 1
+  fi
+
+  mkdir -p "$SETTINGS_DIR"
+  chmod +x "$GUARD_SRC"
+  [ -f "$SETTINGS_FILE" ] || echo '{}' > "$SETTINGS_FILE"
+
+  MERGED=$(jq --arg cmd "$GUARD_SRC" '
+    .hooks //= {} | .hooks.PreToolUse //= []
+    | if [.hooks.PreToolUse[]?.hooks[]?.command] | index($cmd)
+      then .
+      else .hooks.PreToolUse += [{matcher: "Bash", hooks: [{type: "command", command: $cmd}]}]
+      end
+  ' "$SETTINGS_FILE")
+
+  # Only overwrite once jq has produced valid output — a failed merge must not
+  # truncate the user's settings.
+  if [ -z "$MERGED" ]; then
+    echo "error: failed to merge hook into $SETTINGS_FILE (left unchanged)" >&2
+    exit 1
+  fi
+
+  # settings.json is the user's file and may hold unrelated config, so back it up
+  # before writing — but only when the merge actually changes something, so a
+  # re-run does not litter the directory with identical backups.
+  if [ "$MERGED" != "$(cat "$SETTINGS_FILE")" ]; then
+    cp "$SETTINGS_FILE" "$SETTINGS_FILE.bak.$stamp"
+    printf '%s\n' "$MERGED" > "$SETTINGS_FILE"
+    echo "pb-suite: command guard wired into $SETTINGS_FILE (backup: $SETTINGS_FILE.bak.$stamp)"
+  else
+    echo "pb-suite: command guard already wired into $SETTINGS_FILE"
+  fi
+  echo "  patterns: $REPO_DIR/hooks/dangerous-patterns.txt"
+  echo "  Codex is not wired automatically — see the command guard section in README.md."
 fi
 
 echo "pb-suite: linked=$linked skipped=$skipped backed_up=$backed_up target=$TARGET_DIR"
