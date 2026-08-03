@@ -1,0 +1,5 @@
+# Manual-only. This command is a deliberate user-invoked step, not something to
+# trigger from the shape of a change. `disable-model-invocation` is the Claude
+# Code equivalent and is not part of the Agent Skills spec, so Codex needs this.
+policy:
+  allow_implicit_invocation: false

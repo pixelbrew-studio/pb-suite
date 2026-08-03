@@ -32,6 +32,27 @@ elif [ -e "$BOOTSTRAP_DST" ]; then
   left_alone=$((left_alone + 1))
 fi
 
+SETTINGS_FILE="${CLAUDE_SETTINGS_FILE:-$HOME/.claude/settings.json}"
+GUARD_SRC="$REPO_DIR/hooks/deny-dangerous.sh"
+
+# Remove only our own hook entry, and only when jq is available to do it safely.
+# Any other hook the user configured stays untouched.
+if [ -f "$SETTINGS_FILE" ] && command -v jq >/dev/null 2>&1; then
+  if jq -e --arg cmd "$GUARD_SRC" '[.hooks.PreToolUse[]?.hooks[]?.command] | index($cmd)' "$SETTINGS_FILE" >/dev/null 2>&1; then
+    PRUNED=$(jq --arg cmd "$GUARD_SRC" '
+      .hooks.PreToolUse = [
+        .hooks.PreToolUse[]
+        | .hooks = [.hooks[] | select(.command != $cmd)]
+        | select(.hooks | length > 0)
+      ]
+    ' "$SETTINGS_FILE")
+    if [ -n "$PRUNED" ]; then
+      printf '%s\n' "$PRUNED" > "$SETTINGS_FILE"
+      echo "pb-suite: command guard hook removed from $SETTINGS_FILE"
+    fi
+  fi
+fi
+
 echo "pb-suite: removed=$removed left_alone=$left_alone target=$TARGET_DIR"
 [ "$left_alone" -gt 0 ] && echo "  (regular files or foreign symlinks were not touched)"
 exit 0

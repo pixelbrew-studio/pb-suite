@@ -103,6 +103,39 @@ Uninstall:
 
 Only touches symlinks pointing back into this repo — foreign symlinks and regular files are left alone.
 
+## Command guard (opt-in)
+
+Every merge-adjacent command already refuses `--no-verify`, `--force`, and friends. That is a rule the model is asked to follow. The command guard is the layer that enforces it instead:
+
+```bash
+./install --hooks
+```
+
+This wires `hooks/deny-dangerous.sh` as a `PreToolUse` hook on `Bash` in `~/.claude/settings.json`. A matching command exits 2 before it runs, and the agent is told not to retry or reword it. The guard reads `hooks/dangerous-patterns.txt` from beside itself, so editing that file takes effect on the next command — no reinstall, and no second copy to drift out of sync.
+
+It is the only part of pb-suite that changes how the agent runs rather than what it reads, which is why it is opt-in rather than default.
+
+What it blocks: `rm -rf` aimed at `/`, `~`, or `/Users`; raw-disk writes and formatting; `sudo rm`; fork bombs; `curl | sh`; `git push --force`; remote branch deletion; reflog destruction; `gh repo delete`, secret/key deletion, `gh api -X DELETE`, `gh auth token`.
+
+What it deliberately allows: `rm -rf node_modules`, `git push --force-with-lease`, `git gc --prune=2.weeks.ago`, `chmod -R 755 dist`. Locally destructive but recoverable stays allowed — a guard that blocks routine work gets switched off, and a switched-off guard blocks nothing.
+
+Two limits worth stating plainly:
+
+- **It is a seatbelt, not a sandbox.** A regex denylist stops an accident. It does not stop a determined agent: `python -c "shutil.rmtree(...)"` or a base64'd script walks straight past it.
+- **It fails open.** No `jq`, or no patterns file, means every command is allowed. A guard that hard-blocks the moment a dependency goes missing gets uninstalled the same day.
+
+Adding a pattern: write POSIX ERE (`grep -E`), use `[[:space:]]` rather than `\s`, and add both a block case and an allow case to the guard section of `tests/smoke.sh` before committing. The allow cases are what keep the guard usable.
+
+Codex is not wired automatically. Add the same entry to `~/.codex/hooks.json`:
+
+```json
+{"hooks": {"PreToolUse": [{"matcher": "Bash", "hooks": [{"type": "command", "command": "/absolute/path/to/pb-suite/hooks/deny-dangerous.sh"}]}]}}
+```
+
+Codex pins hook trust by hash, so after editing that entry you must run `/hooks` in Codex and re-trust it — otherwise Codex silently skips the guard. That interactive step is why `install-codex` does not do this for you. Use an absolute path; `~` expansion is not reliable across agents.
+
+Uninstall removes only pb-suite's own hook entry and leaves any other hook in place.
+
 ## Editing and extending
 
 Edit the source files in `commands/`. The symlinks in `~/.claude/commands/` point directly at these files, so every change is live in the next command session immediately — no re-install needed.
@@ -138,7 +171,7 @@ Commands are grouped by workflow area. Full instructions live in the correspondi
 | `/pb-copy` | Copywriting review/rewrite. Strips AI-slop, enforces `CLAUDE.md` brand-tone, applies one framework per surface (AIDA/PAS/FAB/BAB). Modes: rewrite / critique / generate / brand-check. |
 | `/pb-pop` | PageOptimizer-Pro-style SEO / AI-citability audit. Scores a page 0-100 (keyword placement, schema, semantic terms, structure, internal links, depth, E-E-A-T) benchmarked against the pages ranking for the target query. Report-only — schema gaps emit paste-ready JSON-LD, prose gaps hand off to `/pb-copy`. `--blueprint` specs a new page; `--no-benchmark` for absolute scoring. Rules live in `references/seo-signals.md`. |
 | `/pb-check` | Single-call orchestrator: runs pb-review + pb-design-review (if UI) + pb-cso `--diff` + pb-qa (if URL given), aggregates findings, surfaces cross-PR patterns. Audit only — no merge, no test runs. |
-| `/pb-ship` | Pre-merge gate: pb-review + `e2e-from-pr` verify, classifies each new spec (`persist` / `revert` / `ask`), ship/wait/decide prompt. Never auto-merges. Refuses `--no-verify`, `--no-gpg-sign`, `--force`. |
+| `/pb-ship` | Pre-merge gate: pb-review + `e2e-from-pr` verify, classifies each new spec (`persist` / `revert` / `ask`), ship/wait/decide prompt. Never auto-merges. On the ship path, follows the merge commit through CI, deployment, and an optional declared health check (`--no-follow` to skip). Refuses `--no-verify`, `--no-gpg-sign`, `--force`. |
 | `/pb-pr` | Drafts a PR description from the branch diff. Reads `CLAUDE.md` for tone, fills `.github/pull_request_template.md` if present. User picks open / draft / revise / copy / cancel. Pass `--prepare` to write the draft to `.context/pr-draft.md` + clipboard instead of opening a PR directly. |
 
 **Investigating and auditing**
@@ -150,6 +183,7 @@ Commands are grouped by workflow area. Full instructions live in the correspondi
 | `/pb-qa` | Runtime QA — visits routes via headless Chromium, captures console errors, 5xx responses, broken images. Per-route screenshots. Read-only. |
 | `/pb-browse` | Fetch a URL via headless Chromium, return clean markdown via Turndown. Self-contained — no external fetch connector required. Optional screenshot. |
 | `/pb-env-check` | Diff `.env.example` vs local env files vs hosted environment keys. Flags missing, undocumented, prod-only, leaked. Keys only — never prints values. |
+| `/pb-decisions` | Names the judgment calls behind the current work. Default: choices already made that the agent is genuinely unsure about, with the alternative not taken and a strict-bucket escalation. `--next`: unresolved choices drilled one at a time, recommendation first. Read-only — it never applies a decision. |
 | `/pb-prune-tests` | Audit the test suite for likely-obsolete specs: broken imports, all-skipped files, references to long-merged PRs. Report only — no deletions without explicit approval. |
 
 **Development discipline**
@@ -165,6 +199,7 @@ Commands are grouped by workflow area. Full instructions live in the correspondi
 |---|---|
 | `/pb-init` | Opt a project into pb-suite. Adds gitignore entries for `.pb-qa/` / `.pb-design-review/` / `.pb-browse/`, offers to create `.claude/lessons.md` and `.claude/incidents.md`, scaffolds a `CLAUDE.md` skeleton if missing. Per-item `AskUserQuestion`. Idempotent. |
 | `/pb-rules` | Inject or update the canonical pb-suite Workflow block (trigger table, risk buckets, severity model) in a `CLAUDE.md`. Per-repo default; `--global` writes to `~/.claude/CLAUDE.md`. Single source of truth — re-run after suite updates. |
+| `/pb-handoff` | Compacts the session into a handoff a fresh agent can act on — decisions and why, dead ends already hit, uncertain calls, open work as state. Writes `.context/handoff.md` (`--repo` for a committed `HANDOFF.md`) and prints a paste-ready block. State, never instructions; references artifacts instead of re-embedding them. |
 | `/pb-resume` | "Where was I?" for one repo — git state, recent activity, open PRs, CI status, suggested next step. Solo-founder context recovery after an interruption. |
 | `/pb-across` | Run a shell or `/pb-*` command across every project one level deep in `Projects/Active/` (handles nested repos like `Group/repo`). Filter / parallel / summary modes. |
 | `/pb-evolve` | Reads `.claude/lessons.md` and `.claude/incidents.md`, clusters recurring patterns at n≥3, proposes surgical edits to pb-* skills. Never auto-applies. `--global` for cross-repo signal, `--apply` to commit changes. The only command that edits the suite itself. |
