@@ -546,6 +546,18 @@ assert "pb-decisions is read-only (no Edit tool)" "$?"
 grep -q -- '--next' commands/pb-decisions.md
 assert "pb-decisions has the forward --next mode" "$?"
 
+grep -q -- '--now' commands/pb-decisions.md
+assert "pb-decisions has the instant --now mode" "$?"
+
+# --now is worthless if it reads files first: the answer then lands after the
+# proposal has hardened. The no-tools constraint is the feature, not a shortcut.
+grep -q 'Read no files, run no commands, search nothing' commands/pb-decisions.md
+assert "pb-decisions --now forbids tool use" "$?"
+
+# A blanket stage sweeps a parallel agent's WIP into the PR.
+grep -q 'never `git add -A`' commands/pb-pr.md
+assert "pb-pr forbids blanket staging" "$?"
+
 grep -q '/pb-decisions' README.md
 assert "README lists /pb-decisions" "$?"
 

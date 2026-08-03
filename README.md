@@ -185,7 +185,7 @@ Commands are grouped by workflow area. Full instructions live in the correspondi
 | `/pb-qa` | Runtime QA — visits routes via headless Chromium, captures console errors, 5xx responses, broken images. Per-route screenshots. Read-only. |
 | `/pb-browse` | Fetch a URL via headless Chromium, return clean markdown via Turndown. Self-contained — no external fetch connector required. Optional screenshot. |
 | `/pb-env-check` | Diff `.env.example` vs local env files vs hosted environment keys. Flags missing, undocumented, prod-only, leaked. Keys only — never prints values. |
-| `/pb-decisions` | Names the judgment calls behind the current work. Default: choices already made that the agent is genuinely unsure about, with the alternative not taken and a strict-bucket escalation. `--next`: unresolved choices drilled one at a time, recommendation first. Read-only — it never applies a decision. |
+| `/pb-decisions` | Names the judgment calls around the current work, at three points on one timeline. `--now`: the 1-3 consequential choices hidden in something just proposed, answered instantly from the gut with no tool use. `--next`: unresolved choices drilled one at a time, recommendation first. Default: choices already made that the agent is genuinely unsure about, with the alternative not taken and a strict-bucket escalation. Read-only — it never applies a decision. |
 | `/pb-prune-tests` | Audit the test suite for likely-obsolete specs: broken imports, all-skipped files, references to long-merged PRs. Report only — no deletions without explicit approval. |
 
 **Development discipline**

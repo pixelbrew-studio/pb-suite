@@ -47,6 +47,21 @@ case " $ARGUMENTS " in
 esac
 ```
 
+**Staging discipline.** If anything still needs committing before the PR, stage the files this work actually touched — never `git add -A`, `git add .`, or `commit -a`. On a machine running several agents against one repo (parallel worktrees, a second session, a background task), a blanket stage sweeps someone else's half-finished edit into your commit, where it reaches the PR as an unexplained change nobody reviewed and the other agent's work silently disappears from their tree. List what you are about to stage and check every path is yours:
+
+```bash
+git status --porcelain
+```
+
+If a file you touched also carries edits you did not make, stop and say so rather than committing around it — the untangling is the user's call.
+
+Confirm the commit is attributed correctly before it lands. A worktree with a local identity override commits as the wrong author, and that is only visible after the fact:
+
+```bash
+git config user.name; git config user.email
+git config --local --get-regexp '^user\.(name|email)$' && echo "pb-pr: local identity override in this worktree — confirm it is intended"
+```
+
 ### 2. Gather signal
 
 ```bash

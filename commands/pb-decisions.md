@@ -1,7 +1,7 @@
 ---
-description: Surface the judgment calls behind the current work. Retrospective by default — the choices the agent made and is not confident about. With --next, forward-looking — drill unresolved choices one at a time. Read-only, no edits.
+description: Surface the judgment calls around the current work. Retrospective by default — the choices the agent made and is not confident about. With --next, drill unresolved choices one at a time. With --now, name the consequential choices hidden in a proposal before any of it is built. Read-only, no edits.
 allowed-tools: [Bash, Read, Grep, AskUserQuestion]
-argument-hint: "(no arguments)  retrospective — unsure choices already made | [--next]  forward — drill open choices one at a time"
+argument-hint: "(no arguments)  retrospective — unsure choices already made | [--next]  drill open choices one at a time | [--now]  instant gut-check on a proposal, no tools"
 ---
 
 # pb-decisions
@@ -12,10 +12,37 @@ Read-only. It proposes nothing and edits nothing — the output is a list to rea
 
 ## Modes
 
-- **default (retrospective)** — choices already made in this session or branch that the agent is genuinely unsure about.
-- **--next (forward)** — choices still open, presented one at a time with a recommendation, until the user stops.
+Three points on one timeline:
+
+- **--now (before)** — the consequential choices hidden in something just proposed, answered instantly from the gut.
+- **--next (during)** — choices still open, presented one at a time with a recommendation, until the user stops.
+- **default (after)** — choices already made in this session or branch that the agent is genuinely unsure about.
+
+## --now mode — before anything is built
+
+Answer **instantly**, from the gut, in the very next message. Read no files, run no commands, search nothing. The scope section below does not apply to this mode.
+
+That constraint is the feature. The value of `--now` is that it lands while the proposal is still cheap to change — a version that first reads the codebase arrives after the user has moved on, and by then the shape is already being defended rather than chosen.
+
+Name the **1-3 genuinely consequential choices** hidden in what the user just proposed. Fewer is better; one real choice beats three padded ones. For each: the options in a few words, then your gut recommendation.
+
+```
+1. <the choice> — <option A> vs <option B>. Gut: <A>, because <half a line>.
+```
+
+Consequential means the two paths lead to materially different work, or one of them is expensive to undo. The recurring three:
+
+- One-off now, or something that gets called again later.
+- A few lines inline, or its own module with a boundary.
+- The biggest thing this could break that nobody is thinking about yet.
+
+Skip anything reversible in minutes — say nothing rather than pad the list. Then stop and wait. Do not start building, do not write a plan, do not ask a follow-up. Being wrong quickly is fine here; the user corrects a gut call in one line, and that exchange is worth more than a researched answer that arrives too late to matter.
+
+Being unsure of the domain is not a reason to skip the mode. Say which choice you would make and mark the guess as a guess.
 
 ## Scope
+
+Applies to the default and `--next` modes only.
 
 ```bash
 source "$HOME/.claude/commands/pb-bootstrap.sh"
