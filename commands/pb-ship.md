@@ -1,7 +1,7 @@
 ---
-description: Pre-merge orchestrator. Runs pb-review, runs e2e-from-pr, classifies each new spec as persist/revert/ask before cleanup, gates the merge with ship/wait/decide. Never auto-merges.
+description: Pre-merge orchestrator. Runs pb-review, runs e2e-from-pr, classifies each new spec as persist/revert/ask before cleanup, gates the merge with ship/wait/decide, then tracks the merge commit through CI and deploy. Never auto-merges.
 allowed-tools: [Bash, Read, Edit, Skill, AskUserQuestion]
-argument-hint: "[--regress]  persist all new specs | [--no-regress]  revert all new specs | [--dry]  run checks only, no merge prompt"
+argument-hint: "[--regress]  persist all new specs | [--no-regress]  revert all new specs | [--dry]  run checks only, no merge prompt | [--no-follow]  skip post-merge verification"
 ---
 
 # pb-ship
@@ -14,6 +14,7 @@ Pre-merge orchestrator. Bundles `pb-review` + `e2e-from-pr` and offers a single 
 - **--regress** — persist all new specs (skip classifier, treat everything as long-lived).
 - **--no-regress** — revert all new specs (skip classifier, treat everything as one-shot verification).
 - **--dry** — run review + verify, skip the merge prompt. Useful for "check before lunch, decide later".
+- **--no-follow** — merge and exit without tracking the commit through CI and deploy (step 7b).
 
 The flags combine: `--regress --dry` persists everything and skips the prompt.
 
@@ -206,10 +207,74 @@ Use the `AskUserQuestion` tool with these four options:
 
 Based on the user's choice:
 
-- **ship** → invoke the `squash-merge` skill on this PR. The skill handles commit-message crafting, branch cleanup, and the actual merge.
+- **ship** → invoke the `squash-merge` skill on this PR. The skill handles commit-message crafting, branch cleanup, and the actual merge. Then continue to step 7b.
 - **wait** → exit. Print the PR URL.
 - **defer** → create a Linear ticket via the Linear MCP (or print a paste-ready draft) with the PR's title, link, and a one-line "deferred at <date>, reason: <user-supplied>" body. Exit.
 - **decide** → invoke `cil-decide` with the PR context. After the decision lands, instruct the user to re-run `/pb-ship` when they are ready to ship.
+
+### 7b. Verify it landed (ship path only)
+
+Only after a merge. Skip on `wait`, `defer`, `decide`, and `--dry`. Skip entirely if `--no-follow` is in `$ARGUMENTS`.
+
+A green PR is not a shipped change. Track the exact merge commit through CI, deployment, and — where the repo declares one — a health check. Track the SHA, never the branch: on an active `main`, "the latest run" is routinely somebody else's commit.
+
+```bash
+BASE=$(gh pr view --json baseRefName --jq .baseRefName)
+git fetch origin "$BASE" --quiet
+SHA=$(gh pr view --json mergeCommit --jq '.mergeCommit.oid')
+[ -n "$SHA" ] && [ "$SHA" != "null" ] || { echo "pb-ship: no merge commit — the PR did not merge"; }
+```
+
+**CI.** The run is not registered the instant the merge lands, so retry before concluding it is missing:
+
+```bash
+RUN_ID=""
+for _ in 1 2 3 4 5 6; do
+  RUN_ID=$(gh run list --branch "$BASE" --limit 20 \
+    --json headSha,databaseId --jq ".[] | select(.headSha==\"$SHA\") | .databaseId" | head -1)
+  [ -n "$RUN_ID" ] && break
+  sleep 5
+done
+[ -n "$RUN_ID" ] || echo "pb-ship: no CI run found for $SHA after 30s — check whether the workflow triggers on $BASE"
+gh run watch "$RUN_ID" --exit-status
+```
+
+Handle the three terminal outcomes distinctly:
+
+- **success** → continue to deployment.
+- **failure** → report the failing step (`gh run view "$RUN_ID" --log-failed`) and stop. Do not open a fix PR in this run; `/pb-ship` is a gate, not a repair loop. Hand the failure to `/pb-investigate`.
+- **cancelled** → a newer push superseded this run, so this commit will never deploy on its own. This is the failure mode that reads as harmless and is not. Confirm the change survives into the newer head and follow that SHA instead:
+
+```bash
+NEW=$(git rev-parse "origin/$BASE")
+git merge-base --is-ancestor "$SHA" "$NEW" \
+  && { echo "pb-ship: run cancelled, change is contained in $NEW — tracking that"; SHA=$NEW; } \
+  || echo "pb-ship: run cancelled and $SHA is NOT an ancestor of $NEW — the change is not on $BASE"
+```
+
+Then restart the CI block against the new `$SHA`.
+
+**Deployment.** Only for repos that actually deploy — if the query returns nothing, the repo is a library or deploys outside GitHub, and that is a skip, not a failure:
+
+```bash
+DEP=$(gh api "repos/:owner/:repo/deployments?sha=$SHA&per_page=1" --jq '.[0].id' 2>/dev/null)
+if [ -n "$DEP" ] && [ "$DEP" != "null" ]; then
+  gh api "repos/:owner/:repo/deployments/$DEP/statuses" --jq '.[0] | {state, url: .environment_url, log: .target_url}'
+fi
+```
+
+`pending` or `in_progress` → poll every 10s up to 5 minutes, then report the target URL and stop waiting. `failure` or `error` → the platform build broke after a green CI; report its log URL and stop. Deploy-platform dashboards and CLIs are out of scope here — the link is the handoff.
+
+**Health.** Optional, and only when the repo declares an endpoint. Read a `## pb-suite: health check` line from `CLAUDE.md` (a single URL); if absent, skip silently rather than guessing a path:
+
+```bash
+HEALTH=$(sed -n '/^## pb-suite: health check/,/^## /p' CLAUDE.md 2>/dev/null | grep -oE 'https?://[^ )]+' | head -1)
+[ -n "$HEALTH" ] && curl -sS -m 15 -o /dev/null -w '%{http_code}\n' "$HEALTH"
+```
+
+Non-2xx after a successful deploy usually means the deployed code expects state the environment does not have yet — a migration not applied, an env var not set. Say which, do not attempt to fix production. `/pb-env-check` covers the env-var case.
+
+Never weaken a check to reach green: no re-running until it passes, no `--no-verify` follow-up commit, no merging around a red required check.
 
 ### 8. Report
 
@@ -221,6 +286,10 @@ pb-ship: <shipped | left-open | deferred | decided | dry-pass | dry-fail | block
   classify:    P persisted, R reverted, A asked
   mode:        smart | regress | no-regress
   PR:          <url>
+  landed:      CI <pass | fail | cancelled-superseded> / deploy <success | failed | none> / health <2xx | non-2xx | none>
+               sha <merge commit>
 ```
+
+The `landed` line appears only on the ship path. Omit it entirely otherwise.
 
 End with one sentence on what the next action is, if any. No emojis, no exclamation marks.

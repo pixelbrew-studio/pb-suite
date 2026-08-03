@@ -428,6 +428,34 @@ process.exit(bad.length ? 1 : 0);
 assert "every command + Codex skill has parseable YAML frontmatter" "$?"
 [ -s /tmp/pb-frontmatter.log ] && cat /tmp/pb-frontmatter.log
 
+# --- pb-decisions / pb-ship post-merge follow ---
+
+echo "[pb-decisions / ship follow]"
+
+# pb-decisions is read-only: it names judgment calls, it never applies one.
+grep -q 'allowed-tools:.*Edit' commands/pb-decisions.md
+[ "$?" -ne 0 ]
+assert "pb-decisions is read-only (no Edit tool)" "$?"
+
+grep -q -- '--next' commands/pb-decisions.md
+assert "pb-decisions has the forward --next mode" "$?"
+
+grep -q '/pb-decisions' README.md
+assert "README lists /pb-decisions" "$?"
+
+# Following the branch instead of the merge SHA tracks somebody else's commit
+# on an active base branch — the whole point of step 7b.
+grep -q 'mergeCommit' commands/pb-ship.md
+assert "pb-ship follows the merge commit SHA" "$?"
+
+# A cancelled run means this commit never deploys on its own; it must not read
+# as a harmless non-failure.
+grep -q 'merge-base --is-ancestor' commands/pb-ship.md
+assert "pb-ship handles a superseded (cancelled) CI run" "$?"
+
+grep -q -- '--no-follow' commands/pb-ship.md
+assert "pb-ship post-merge follow is opt-out" "$?"
+
 # --- Summary ---
 
 echo
