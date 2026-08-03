@@ -2,6 +2,10 @@
 
 Notable changes to pb-suite. Follows semver, written newest-first.
 
+## Unreleased
+
+- The cross-model review in `/pb-implement` step 8b and `/pb-ship` step 2 must not be prompted with a checklist. Naming the failure modes to look for returns findings in exactly those categories and silence everywhere else, which reads as a clean review and is not one — the gate requires a different model family because a different family has different priors, and an enumerated prompt overwrites them with the author's, degrading the pass into a slower search for blind spots the author already had. Saying where to look stays fair context; saying what to find does not. Promoted from a real miss: a checklist-prompted pass on the command guard returned four genuine defects, all inside the three categories the prompt named, with no way to tell what a fourth category would have surfaced.
+
 ## 0.10.0
 
 - New `/pb-decisions`. A diff records what was decided and never what was guessed, so the command asks for the low-confidence calls directly: default mode lists choices already made that the agent is genuinely unsure of, each with the alternative not taken and what would have to be true for it to win; `--next` drills unresolved choices one at a time with a recommendation before the question. Read-only, and an empty list is a valid result — uncertain means shape/contract, unevidenced default, unverified assumption about data or callers, or a boundary that could sit a layer up or down, not naming or formatting. Strict-bucket uncertainty escalates to `/pb-cso`, `/pb-tdd`, or `/pb-investigate` rather than staying a note.
