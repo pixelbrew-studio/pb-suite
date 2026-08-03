@@ -2,7 +2,7 @@
 
 Notable changes to pb-suite. Follows semver, written newest-first.
 
-## Unreleased
+## 0.11.0
 
 - `/pb-decisions --now` completes the command's timeline: `--now` before anything is built, `--next` while choices are open, default after the work is done. It answers instantly and reads nothing — no files, no commands, no search. The no-tool constraint is the feature: a researched version arrives after the user has moved on, by which point the shape is being defended rather than chosen. Names 1-3 consequential choices with a gut recommendation each, where consequential means materially different work or expensive to undo, then stops. Being wrong fast is the intended failure mode; the user corrects a gut call in one line.
 - `/pb-pr` states staging discipline in its preflight, as a report-and-stop rule: the command never stages, commits, or touches the working tree in any mode. In open mode an uncommitted tree is reported and the run stops, since `gh pr create` publishes committed work only and the PR would silently omit it; the user commits the exact paths — never `git add -A`, `git add .`, or `commit -a` — or re-runs with `--prepare`, where the worktree is the intended source. Naming exact paths matters because with several agents against one repo, a blanket stage sweeps another agent's half-finished edit into the commit, where it reaches the PR unreviewed and vanishes from the other agent's tree. The preflight also reads the branch's actual commit authors rather than the current config, since an environment or worktree identity override produces wrong-author commits that are only visible afterwards.
