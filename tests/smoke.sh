@@ -554,9 +554,22 @@ assert "pb-decisions has the instant --now mode" "$?"
 grep -q 'Read no files, run no commands, search nothing' commands/pb-decisions.md
 assert "pb-decisions --now forbids tool use" "$?"
 
+# Without explicit dispatch, a literal agent can execute a mode body it was
+# never asked for — the mode headings alone do not gate anything.
+grep -q 'Dispatch: run exactly one mode' commands/pb-decisions.md
+assert "pb-decisions dispatches exactly one mode" "$?"
+
 # A blanket stage sweeps a parallel agent's WIP into the PR.
 grep -q 'never `git add -A`' commands/pb-pr.md
 assert "pb-pr forbids blanket staging" "$?"
+
+# pb-pr drafts descriptions; it must never mutate the tree. The staging rule
+# has to read as "report and stop", or it contradicts step 7b in the same file.
+grep -q 'This command does not stage, commit, or touch the working tree' commands/pb-pr.md
+assert "pb-pr staging rule stays read-only" "$?"
+
+grep -q 'Do not stage anything' commands/pb-pr.md
+assert "pb-pr keeps its no-staging guarantee in prepare mode" "$?"
 
 grep -q '/pb-decisions' README.md
 assert "README lists /pb-decisions" "$?"

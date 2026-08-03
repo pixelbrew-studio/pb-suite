@@ -18,6 +18,13 @@ Three points on one timeline:
 - **--next (during)** — choices still open, presented one at a time with a recommendation, until the user stops.
 - **default (after)** — choices already made in this session or branch that the agent is genuinely unsure about.
 
+**Dispatch: run exactly one mode, then stop.** Select it before reading any further section, and execute only that section — the other two do not apply to this invocation.
+
+- `--now` in `$ARGUMENTS` → the `--now` section. Nothing else in this file runs, including the scope block.
+- `--next` in `$ARGUMENTS` → the `--next` section, after the scope block.
+- neither → the default section, after the scope block.
+- both `--now` and `--next`, or any unrecognised flag → run nothing. Print `pb-decisions: pick one mode — --now, --next, or no argument` and stop. Guessing which was meant produces the wrong point on the timeline.
+
 ## --now mode — before anything is built
 
 Answer **instantly**, from the gut, in the very next message. Read no files, run no commands, search nothing. The scope section below does not apply to this mode.

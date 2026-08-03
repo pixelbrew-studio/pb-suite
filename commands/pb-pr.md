@@ -47,20 +47,24 @@ case " $ARGUMENTS " in
 esac
 ```
 
-**Staging discipline.** If anything still needs committing before the PR, stage the files this work actually touched — never `git add -A`, `git add .`, or `commit -a`. On a machine running several agents against one repo (parallel worktrees, a second session, a background task), a blanket stage sweeps someone else's half-finished edit into your commit, where it reaches the PR as an unexplained change nobody reviewed and the other agent's work silently disappears from their tree. List what you are about to stage and check every path is yours:
+**Staging discipline — report, never stage.** This command does not stage, commit, or touch the working tree in any mode. If work is still uncommitted, say so and stop; committing it is the user's step, not this command's.
 
 ```bash
 git status --porcelain
 ```
 
-If a file you touched also carries edits you did not make, stop and say so rather than committing around it — the untangling is the user's call.
+- **open mode, uncommitted changes present** — `gh pr create` publishes committed work only, so an uncommitted tree means the PR would omit it. Report the paths and stop. Tell the user to commit the exact paths this work touched — never `git add -A`, `git add .`, or `commit -a` — or to re-run with `--prepare`.
+- **`--prepare` mode** — continue. The worktree is the intended source of the draft, and Conductor's button owns the commit.
 
-Confirm the commit is attributed correctly before it lands. A worktree with a local identity override commits as the wrong author, and that is only visible after the fact:
+The reason to name exact paths rather than stage everything: on a machine running several agents against one repo (parallel worktrees, a second session, a background task), a blanket stage sweeps another agent's half-finished edit into the commit, where it reaches the PR as an unexplained change nobody reviewed and disappears from the other agent's tree.
+
+Check who actually authored the branch's commits, not just the current config — an environment override or a worktree-local identity produces wrong-author commits that are only visible afterwards:
 
 ```bash
-git config user.name; git config user.email
-git config --local --get-regexp '^user\.(name|email)$' && echo "pb-pr: local identity override in this worktree — confirm it is intended"
+git log --format='%an <%ae>' "$BASE"..HEAD | sort -u
 ```
+
+More than one author, or an identity the user does not recognise, is worth surfacing before the PR opens.
 
 ### 2. Gather signal
 
