@@ -1,6 +1,6 @@
 ---
 name: pb-ship
-description: Run the pre-merge pb-suite gate: review, verification, regression-test classification, and an explicit human ship decision, never automatic merge.
+description: 'Run the pre-merge pb-suite gate: review, verification, regression-test classification, an explicit human ship decision that is never automatic, then follow the merge commit through CI and deploy.'
 ---
 
 # pb-ship

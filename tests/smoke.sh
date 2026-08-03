@@ -412,6 +412,22 @@ echo "[pb-qa]"
 grep -q 'page.on("response"' scripts/qa.ts
 assert "qa.ts has a network response listener" "$?"
 
+# --- frontmatter is valid YAML ---
+
+echo "[frontmatter]"
+
+# An unquoted description containing ": " is invalid YAML. Claude Code's lenient
+# parser accepts it; Codex's does not, and the skill then silently never loads.
+bun -e '
+const {readFileSync, globSync} = require("fs");
+const bad = [...globSync("commands/pb*.md"), ...globSync("codex-skills/*/SKILL.md")]
+  .filter(f => { try { Bun.YAML.parse(readFileSync(f, "utf8").split("---")[1]); return false } catch { return true } });
+bad.forEach(f => console.error("invalid frontmatter: " + f));
+process.exit(bad.length ? 1 : 0);
+' 2>/tmp/pb-frontmatter.log
+assert "every command + Codex skill has parseable YAML frontmatter" "$?"
+[ -s /tmp/pb-frontmatter.log ] && cat /tmp/pb-frontmatter.log
+
 # --- Summary ---
 
 echo
