@@ -288,14 +288,22 @@ assert "cil_linear_ticket_from_branch normalizes 'abc-123-...' to 'ABC-123'" "$?
 
 # Suite-level wiring
 grep -q '/pb-ship.md\|pb-ship.md' commands/pb-ship.md 2>/dev/null  # sanity
-grep -q 'pb_load_bearing_p\|pb_load_bearing_paths\|canonical .## pb-suite: load-bearing files. block' commands/pb-ship.md
+grep -q '## pb-suite: load-bearing files' commands/pb-ship.md
 assert "pb-ship references canonical load-bearing block" "$?"
 
-grep -q 'defer' commands/pb-ship.md && grep -q 'decide' commands/pb-ship.md
-assert "pb-ship gate has defer + decide options" "$?"
+! grep -q 'e2e-from-pr\|persist/revert/ask\|Selective cleanup' commands/pb-ship.md
+assert "pb-ship does not create or classify verification tests" "$?"
 
-grep -q 'exit-readiness' commands/pb-ship.md
-assert "pb-ship has exit-readiness prompt" "$?"
+grep -q 'This is the only approval prompt' commands/pb-ship.md \
+  && ! grep -q 'squash-merge' commands/pb-ship.md
+assert "pb-ship uses one merge confirmation including its squash message" "$?"
+
+grep -q 'gh pr checks --required --watch --fail-fast' commands/pb-ship.md \
+  && grep -q 'Migration parity' commands/pb-ship.md
+assert "pb-ship trusts required CI and separately preserves migration parity" "$?"
+
+grep -q 'Skip preview infrastructure entirely' commands/pb-ship.md
+assert "pb-ship skips preview infrastructure when no app changed" "$?"
 
 # Cross-model review keeps an independent frontier fallback when the preferred
 # Claude/Codex reviewer is unavailable.
@@ -601,7 +609,7 @@ assert "pb reports a wired-but-inert command guard" "$?"
 grep -q 'Dispatch it in the background' commands/pb-implement.md
 assert "pb-implement backgrounds the cross-model pass" "$?"
 
-grep -q 'Dispatch it in the background' commands/pb-ship.md
+grep -q 'Dispatch long reviews in the background' commands/pb-ship.md
 assert "pb-ship backgrounds the cross-model pass" "$?"
 
 grep -q '/pb-decisions' README.md
@@ -617,8 +625,9 @@ assert "pb-ship follows the merge commit SHA" "$?"
 grep -q 'merge-base --is-ancestor' commands/pb-ship.md
 assert "pb-ship handles a superseded (cancelled) CI run" "$?"
 
-grep -q -- '--no-follow' commands/pb-ship.md
-assert "pb-ship post-merge follow is opt-out" "$?"
+grep -q -- '--no-follow' commands/pb-ship.md \
+  && grep -q 'bypass flag detected' commands/pb-ship.md
+assert "pb-ship refuses the old post-merge follow bypass" "$?"
 
 # --- Summary ---
 

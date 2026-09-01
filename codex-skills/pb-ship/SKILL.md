@@ -1,6 +1,6 @@
 ---
 name: pb-ship
-description: 'Run the pre-merge pb-suite gate: review, verification, regression-test classification, an explicit human ship decision that is never automatic, then follow the merge commit through CI and deploy.'
+description: 'Run the lean pre-merge pb-suite gate: review, strict-only cross-family review, required CI and relevant previews, one explicit merge confirmation, then follow the exact deployment.'
 ---
 
 # pb-ship
