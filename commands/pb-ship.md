@@ -17,9 +17,11 @@ Read-only until the user approves the displayed squash commit message. Never edi
 Refuse bypasses and require a clean, fully pushed PR head:
 
 ```bash
-case " $ARGUMENTS " in
+case " ${ARGUMENTS:-} " in
   *" --no-verify "*|*" --no-gpg-sign "*|*" --force "*|*" -f "*|*" --no-preview "*|*" --no-follow "*)
     echo "pb-ship: refuse — bypass flag detected. The merge gate is non-negotiable."; exit 1;;
+  "  "|" --dry ") ;;
+  *) echo "pb-ship: unknown argument. Supported: --dry"; exit 1;;
 esac
 
 [ -z "$(git status --porcelain)" ] || {

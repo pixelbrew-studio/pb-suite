@@ -169,6 +169,12 @@ assert "pb-ship refuses --no-verify and --force" "$?"
 grep -E '\*" --no-gpg-sign "\*' commands/pb-ship.md >/dev/null
 assert "pb-ship refuses --no-gpg-sign" "$?"
 
+PB_SHIP_DISPATCH=$(sed -n '/^case " ${ARGUMENTS:-} "/,/^esac$/p' commands/pb-ship.md)
+ARGUMENTS='' bash -c "$PB_SHIP_DISPATCH" \
+  && ARGUMENTS='--dry' bash -c "$PB_SHIP_DISPATCH" \
+  && ! ARGUMENTS='--regress' bash -c "$PB_SHIP_DISPATCH" >/dev/null 2>&1
+assert "pb-ship accepts only default and --dry modes" "$?"
+
 # Item 11 (partial): pb-pr rejects --no-verify / --force
 grep -E '\*" --no-verify "\*' commands/pb-pr.md >/dev/null
 assert "pb-pr refuses --no-verify" "$?"
