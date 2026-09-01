@@ -103,7 +103,7 @@ Learning artifacts (opt-in, committed):
 
 ## pb-suite: load-bearing files
 
-Canonical block consumed by `/pb-ship` (classifier) and `/pb-cso` (severity heightening). One glob per bullet. Match semantics: shell glob against repo-relative path.
+Canonical block consumed by `/pb-ship` (strict cross-family review) and `/pb-cso` (severity heightening). One glob per bullet. Match semantics: shell glob against repo-relative path.
 
 ```
 - src/lib/billing/**
@@ -111,7 +111,7 @@ Canonical block consumed by `/pb-ship` (classifier) and `/pb-cso` (severity heig
 - packages/*/billing/**
 ```
 
-If absent, `pb-ship` falls back to its built-in load-bearing heuristics. Adding the block makes the classifier deterministic for this repo.
+If absent, `pb-ship` uses the canonical strict risk bucket. Add the block for project-specific load-bearing paths.
 
 ## pb-suite: next-step nudges
 

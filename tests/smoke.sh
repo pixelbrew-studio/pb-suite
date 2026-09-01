@@ -169,6 +169,12 @@ assert "pb-ship refuses --no-verify and --force" "$?"
 grep -E '\*" --no-gpg-sign "\*' commands/pb-ship.md >/dev/null
 assert "pb-ship refuses --no-gpg-sign" "$?"
 
+PB_SHIP_DISPATCH=$(sed -n '/^case " ${ARGUMENTS:-} "/,/^esac$/p' commands/pb-ship.md)
+ARGUMENTS='' bash -c "$PB_SHIP_DISPATCH" \
+  && ARGUMENTS='--dry' bash -c "$PB_SHIP_DISPATCH" \
+  && ! ARGUMENTS='--regress' bash -c "$PB_SHIP_DISPATCH" >/dev/null 2>&1
+assert "pb-ship accepts only default and --dry modes" "$?"
+
 # Item 11 (partial): pb-pr rejects --no-verify / --force
 grep -E '\*" --no-verify "\*' commands/pb-pr.md >/dev/null
 assert "pb-pr refuses --no-verify" "$?"
@@ -254,6 +260,19 @@ assert "VERSION is semver with a matching CHANGELOG entry ($VER)" "$?"
 grep -q '^## 0\.5\.0' CHANGELOG.md && grep -q '^## 0\.4\.0' CHANGELOG.md && grep -q '^## 0\.1\.0' CHANGELOG.md
 assert "CHANGELOG has 0.5.0, 0.4.0, 0.1.0 entries" "$?"
 
+# The assertion above only proves the version appears SOMEWHERE. It passes while
+# VERSION lags behind several released sections — which is exactly the drift that
+# left 0.9.3 tagged with five shipped entries sitting under Unreleased.
+TOP_VER=$(grep -E '^## [0-9]+\.[0-9]+\.[0-9]+$' CHANGELOG.md | head -1 | sed 's/^## //')
+[ "$TOP_VER" = "$VER" ]
+assert "VERSION matches the newest CHANGELOG section (VERSION=$VER, top=$TOP_VER)" "$?"
+
+# A stacked branch that renames Unreleased while its base already renamed it
+# produces two identical headings, and the entries silently split across them.
+DUPE=$(grep -E '^## [0-9]+\.[0-9]+\.[0-9]+$' CHANGELOG.md | sort | uniq -d | tr '\n' ' ')
+[ -z "$DUPE" ]
+assert "CHANGELOG has no duplicate version headings${DUPE:+ (found: $DUPE)}" "$?"
+
 # --- Section: 0.4.0 CIL integration ---
 
 echo "[CIL integration]"
@@ -275,14 +294,22 @@ assert "cil_linear_ticket_from_branch normalizes 'abc-123-...' to 'ABC-123'" "$?
 
 # Suite-level wiring
 grep -q '/pb-ship.md\|pb-ship.md' commands/pb-ship.md 2>/dev/null  # sanity
-grep -q 'pb_load_bearing_p\|pb_load_bearing_paths\|canonical .## pb-suite: load-bearing files. block' commands/pb-ship.md
+grep -q '## pb-suite: load-bearing files' commands/pb-ship.md
 assert "pb-ship references canonical load-bearing block" "$?"
 
-grep -q 'defer' commands/pb-ship.md && grep -q 'decide' commands/pb-ship.md
-assert "pb-ship gate has defer + decide options" "$?"
+! grep -q 'e2e-from-pr\|persist/revert/ask\|Selective cleanup' commands/pb-ship.md
+assert "pb-ship does not create or classify verification tests" "$?"
 
-grep -q 'exit-readiness' commands/pb-ship.md
-assert "pb-ship has exit-readiness prompt" "$?"
+grep -q 'This is the only approval prompt' commands/pb-ship.md \
+  && ! grep -q 'squash-merge' commands/pb-ship.md
+assert "pb-ship uses one merge confirmation including its squash message" "$?"
+
+grep -q 'gh pr checks --required --watch --fail-fast' commands/pb-ship.md \
+  && grep -q 'Migration parity' commands/pb-ship.md
+assert "pb-ship trusts required CI and separately preserves migration parity" "$?"
+
+grep -q 'Skip preview infrastructure entirely' commands/pb-ship.md
+assert "pb-ship skips preview infrastructure when no app changed" "$?"
 
 # Cross-model review keeps an independent frontier fallback when the preferred
 # Claude/Codex reviewer is unavailable.
@@ -571,6 +598,26 @@ assert "pb-pr staging rule stays read-only" "$?"
 grep -q 'Do not stage anything' commands/pb-pr.md
 assert "pb-pr keeps its no-staging guarantee in prepare mode" "$?"
 
+# A merged PR still answers `gh pr checks` green, so a gate run against one
+# looks like it passed — for a commit you are no longer on.
+grep -q 'state: MERGED' commands/pb-ship.md
+assert "pb-ship preflight detects an already-merged PR" "$?"
+
+grep -q 'headRefOid' commands/pb-ship.md
+assert "pb-ship compares local HEAD against the PR head" "$?"
+
+# The guard is an absolute path; move the checkout and it stays listed but inert.
+grep -q 'WIRED BUT INERT' commands/pb.md
+assert "pb reports a wired-but-inert command guard" "$?"
+
+# A foreground cross-model call dies on the tool timeout, and the usual recovery
+# is to shrink the prompt — trading review depth for a call that returns.
+grep -q 'Dispatch it in the background' commands/pb-implement.md
+assert "pb-implement backgrounds the cross-model pass" "$?"
+
+grep -q 'Dispatch long reviews in the background' commands/pb-ship.md
+assert "pb-ship backgrounds the cross-model pass" "$?"
+
 grep -q '/pb-decisions' README.md
 assert "README lists /pb-decisions" "$?"
 
@@ -584,8 +631,9 @@ assert "pb-ship follows the merge commit SHA" "$?"
 grep -q 'merge-base --is-ancestor' commands/pb-ship.md
 assert "pb-ship handles a superseded (cancelled) CI run" "$?"
 
-grep -q -- '--no-follow' commands/pb-ship.md
-assert "pb-ship post-merge follow is opt-out" "$?"
+grep -q -- '--no-follow' commands/pb-ship.md \
+  && grep -q 'bypass flag detected' commands/pb-ship.md
+assert "pb-ship refuses the old post-merge follow bypass" "$?"
 
 # --- Summary ---
 

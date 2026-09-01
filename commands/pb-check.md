@@ -8,7 +8,7 @@ argument-hint: "[url]  optional dev-server URL for pb-qa + pb-design-review live
 
 One call, all review-passes. Use when you want a full picture of a diff — code, design, security, runtime — and you would rather not remember which command does what. The orchestrator runs each pass, captures findings, then aggregates them across passes so you can see the bigger picture.
 
-Distinct from `/pb-ship`: ship is the path to merge (review + e2e-from-pr + gate). Check is the path to understand. No merge, no test-suite mutation, no commits.
+Distinct from `/pb-ship`: ship is the path to merge (review + required evidence + gate). Check is the path to understand. No merge, no test-suite mutation, no commits.
 
 The point of running them together is the **Lessons** section at the end: patterns that appear in more than one pass, recurring themes specific to this project, blind spots worth fixing structurally.
 

@@ -173,7 +173,7 @@ Commands are grouped by workflow area. Full instructions live in the correspondi
 | `/pb-copy` | Copywriting review/rewrite. Strips AI-slop, enforces `CLAUDE.md` brand-tone, applies one framework per surface (AIDA/PAS/FAB/BAB). Modes: rewrite / critique / generate / brand-check. |
 | `/pb-pop` | PageOptimizer-Pro-style SEO / AI-citability audit. Scores a page 0-100 (keyword placement, schema, semantic terms, structure, internal links, depth, E-E-A-T) benchmarked against the pages ranking for the target query. Report-only — schema gaps emit paste-ready JSON-LD, prose gaps hand off to `/pb-copy`. `--blueprint` specs a new page; `--no-benchmark` for absolute scoring. Rules live in `references/seo-signals.md`. |
 | `/pb-check` | Single-call orchestrator: runs pb-review + pb-design-review (if UI) + pb-cso `--diff` + pb-qa (if URL given), aggregates findings, surfaces cross-PR patterns. Audit only — no merge, no test runs. |
-| `/pb-ship` | Pre-merge gate: pb-review + `e2e-from-pr` verify, classifies each new spec (`persist` / `revert` / `ask`), ship/wait/decide prompt. Never auto-merges. On the ship path, follows the merge commit through CI, deployment, and an optional declared health check (`--no-follow` to skip). Refuses `--no-verify`, `--no-gpg-sign`, `--force`. |
+| `/pb-ship` | Lean pre-merge gate: reviews the diff, adds a cross-family pass only for strict/load-bearing changes, verifies required CI, migration parity, and affected-app previews, then shows the exact squash message for one merge confirmation. Follows the exact merge SHA through production. Refuses bypass flags. |
 | `/pb-pr` | Drafts a PR description from the branch diff. Reads `CLAUDE.md` for tone, fills `.github/pull_request_template.md` if present. User picks open / draft / revise / copy / cancel. Pass `--prepare` to write the draft to `.context/pr-draft.md` + clipboard instead of opening a PR directly. |
 
 **Investigating and auditing**
@@ -213,7 +213,6 @@ When a repo has a top-level `CIL/sources.md`, some pb-* commands automatically e
 
 - `/pb-resume` — adds assigned tracker items and recent specs. `--no-cil` to suppress.
 - `/pb-pr` — extracts a tracker key from the branch name (e.g. `ABC-123-foo`), seeds the summary from the matching ticket, appends `Closes <KEY>`.
-- `/pb-ship` — the gate splits into ship / wait / defer / decide. `defer` opens a follow-up ticket when supported; `decide` stays for genuinely strategic choices (cil-decide enforcement). Exit-readiness forced-read prompt on external-surface / load-bearing / legal / billing / auth diffs.
 - `/pb-cso` — canonical-narrative check: when `CLAUDE.md` declares a narrative (e.g. privacy-first) and the diff adds external-surface copy, flags a missing concrete claim (IMPORTANT) or contradictory copy (BLOCKER).
 - `/pb-evolve --cil` — reads `CIL/improvements/*.md` and `CIL/incidents.md` in addition to the `.claude/*.md` artifacts.
 
@@ -238,16 +237,9 @@ Never `@{u}` on a feature branch: that resolves to `origin/<feature>` and yields
 
 Scope-creep check via `comm -13` (committed files vs worktree-changed files) surfaces unrelated WIP before it leaks into a PR.
 
-### Verify vs regress (`/pb-ship`)
+### Shipping evidence (`/pb-ship`)
 
-`e2e-from-pr` by default writes new specs into the permanent suite, which grows monotonically and slows CI. `/pb-ship` classifies each new spec:
-
-- **default (smart)** — `persist` (contract, security, load-bearing, fixed-bug regression), `revert` (visual, marketing surface, observable, duplicate), or `ask` (borderline → `AskUserQuestion`).
-- **`--regress`** — everything persists (skip classifier).
-- **`--no-regress`** — everything reverts (skip classifier; original verify-mode).
-- **`--dry`** — run + classify, no merge prompt.
-
-Default mode requires a clean working tree (the selective revert assumes all changes came from `e2e-from-pr`).
+`/pb-ship` trusts green required CI instead of repeating identical lint, typecheck, build, and test commands locally. It runs only evidence CI does not already provide: migration parity when schema state changed, and existing preview checks for affected deployable apps. It never creates or classifies tests. `--dry` runs the gate without offering to merge.
 
 ### Learning artifacts (opt-in, per-project)
 

@@ -127,8 +127,7 @@ for brand-tone, testing policy, and load-bearing files.
 
 ## Load-bearing files
 
-Files whose tests must persist through `/pb-ship` classification regardless of
-visual / marketing heuristics. List paths or globs:
+Files whose changes require `/pb-ship`'s cross-family review. List paths or globs:
 
 - <e.g. src/lib/billing/**>
 - <e.g. src/lib/auth/middleware.ts>

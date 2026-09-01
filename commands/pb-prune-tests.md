@@ -12,7 +12,7 @@ Scan the current repo's test suite for likely-obsolete specs. Three detection ru
 - **all-skipped** — every `it` / `test` in the file uses `.skip` / `xit` / `xtest`. The file is dead weight in CI but contributes nothing.
 - **stale-pr-ref** — the file references a merged PR older than `--pr-age-days` (default 90). One of the e2e-from-pr artifacts that probably outlived its purpose.
 
-This is the opruim-tool for the test-suite bloat that grew under e2e-from-pr's default behavior. `/pb-ship --regress` was the fix going forward; `/pb-prune-tests` is the fix for what is already in the tree.
+This is the opruim-tool for test-suite bloat from old verification workflows. `/pb-ship` no longer creates tests; `/pb-prune-tests` handles what is already in the tree.
 
 Report-only by default. Deletions require explicit user approval per file or per severity bucket.
 
