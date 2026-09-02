@@ -148,6 +148,8 @@ One test per applicable path. Light bucket: one happy + one failure, skip the re
 
 ### 8. Gate
 
+Apply [`references/workflow-optimizations.md`](../references/workflow-optimizations.md): in a monorepo, scope lint, typecheck, and tests to the changed package plus dependents during slices; reserve the full workspace gate for the pre-PR or CI/pre-push boundary; skip local builds unless build configuration, package boundaries, bundling, or deployment behavior changed.
+
 Run the project's standard gate. Detect commands from `package.json` scripts (or the project's `CLAUDE.md`):
 
 ```bash
@@ -157,7 +159,7 @@ HAS_BUILD=$(grep -q '"build"' package.json 2>/dev/null && echo yes || echo no)
 HAS_TEST=$(grep -q '"test"' package.json 2>/dev/null && echo yes || echo no)
 ```
 
-Run whatever exists. Plus the new tests + a full-suite run (smoke that nothing else broke). If anything is red: stop, fix, do not call the slice done. The point of TDD is that the gate is non-negotiable.
+Run whatever exists for the affected package and its dependents, plus the new tests. Defer the full-workspace run to the pre-PR or CI/pre-push gate unless the repository has no safe scoped command. If anything is red: stop, fix, do not call the slice done. The point of TDD is that the gate is non-negotiable.
 
 ### 9. Report
 

@@ -16,7 +16,7 @@ AI-assisted coding is fast enough to make bad process expensive. `pb-suite` keep
 
 The checks in these commands are not a curated best-practices list. They are promoted from real defects: each project keeps a private lesson log (`.claude/lessons.md`, appended by `/pb-check`) and incident log (`.claude/incidents.md`, appended by `/pb-investigate`). When a pattern recurs across PRs (n >= 3), `/pb-evolve` proposes a surgical, generalized edit to the relevant command — a new checklist bullet, a removed high-false-positive check, or a severity re-tier — which the maintainer accepts or rejects per candidate.
 
-Only the abstracted rule lands here; the raw lessons, project names, and incident details stay in the private project repos. Most of the sharper checks (multi-tenant RLS write-path scope-crossing, unguarded post-spend regions, the mandatory frontier cross-model review on strict diffs) exist because a same-model review plus passing tests missed exactly that defect in production code, repeatedly.
+Only the abstracted rule lands here; the raw lessons, project names, and incident details stay in the private project repos. Most of the sharper checks (multi-tenant RLS write-path scope-crossing, unguarded post-spend regions, the mandatory strongest-available independent review on strict diffs) exist because a same-model review plus passing tests missed exactly that defect in production code, repeatedly.
 
 ## How it works
 

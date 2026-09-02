@@ -67,6 +67,8 @@ Triggers — apply unless the user explicitly opts out:
 |---|---|
 | Tiny deterministic fix (one behavior, clear test) | `/pb-tdd <slice>` |
 | Nontrivial feature or refactor | `/pb-implement <objective>` — it plans verification and routes TDD, investigation, and specialist review by what the change touches |
+| Mid-feature checkpoint / before PR | `/pb-review` after a slice; `/pb-check` once on the frozen diff before opening the PR |
+| Model allocation | Bulk/mechanical work uses the cheapest capable sub-agent; the strongest selected model handles sanitization, evaluation, and final synthesis |
 | Strict path (AI request, billing/credits, auth/tenant, storage/retention, secrets) | strict `/pb-implement` — human gate + mandatory cross-model review |
 | Touching files under `src/lib/ai/`, `src/lib/billing/`, `src/lib/auth/` | `/pb-cso --diff` before opening a PR |
 | Touching UI files (`.tsx`, `.css`, tailwind config) | `/pb-design-review` before opening a PR |

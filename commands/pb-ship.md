@@ -53,13 +53,15 @@ Read the complete diff. Apply `/pb-review`'s correctness, safety, completeness, 
 
 Do not run lint, typecheck, build, or the full test suite locally when required CI covers them. The next step reads that evidence directly.
 
+**Review-loop gotcha.** Run the independent review once on the frozen diff before ship. Triage `BLOCKER` / `IMPORTANT` / `NIT`; if BLOCKERs are confirmed, fix them upstream in one batch before returning to ship. Do not restart the review after every micro-fix. Re-run only after a material scope change or an unresolved correctness question; IMPORTANT and NIT findings do not block unless the user promotes them.
+
 ### 3. Cross-family review, strict changes only
 
 Classify the diff using the project's `## Workflow (pb-suite)` risk buckets and `## pb-suite: load-bearing files` globs. Standard CRUD, tooling, docs, copy, and visual-only changes skip this step.
 
-For a strict or load-bearing diff, require a completed review of the branch diff by a frontier-tier model from a different family than the author. Give it the diff, intent, and risk bucket, then ask what is wrong. Do not give it a failure-mode checklist. Dispatch long reviews in the background, read the result, record the resolved model id, and triage findings through the suite severity model. Any BLOCKER stops the gate.
+For a strict or load-bearing diff, choose the strongest currently available reviewer that is independent of the authoring model. Do not use a fixed family or named-model mapping. The user may pin `PB_CROSS_MODEL_REVIEW_MODEL` to the exact model ID; otherwise inspect the available model catalog for the selected review harness and choose the best current fit for the diff. Use a read-only/plan mode, give it the diff, intent, and risk bucket, then ask what is wrong. Do not give it a failure-mode checklist. Dispatch long reviews in the background, read the result, record the resolved model ID and harness, and triage findings through the suite severity model. If no independent reviewer can be resolved, the cross-model pass does not satisfy the gate and strict work remains blocked. Any BLOCKER stops the gate.
 
-**OpenCode fallback.** If the preferred Claude/Codex reviewer is unavailable, resolve `PB_OPENCODE_REVIEW_MODEL` to an available frontier-tier GLM or Grok `provider/model`, then use `opencode run --agent plan --model "$PB_OPENCODE_REVIEW_MODEL"`. An unset, unavailable, mid-tier, same-family, or write-capable fallback does not satisfy the gate.
+The strongest selected model in the main session owns final evaluation, sanitization, severity triage, and the merge recommendation. Sub-agents may collect CI, preview, or review evidence, but cannot approve strict work or make the final sanitization/evaluation judgment.
 
 ### 4. Required CI, migration parity, and relevant previews
 

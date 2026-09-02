@@ -1,14 +1,14 @@
 ---
-description: Spec-first feature implementation, the orchestration layer above the suite. Plans verification before writing code (routing /pb-cso, /pb-design-review, /pb-copy by what the change touches), interviews for missing context, gates high-risk work behind explicit human approval, drives every slice through the /pb-tdd RED→GREEN→REFACTOR loop — in-process by default, sub-agents only when independence, parallelism, or a fresh evaluator earns it (escalating stuck slices to /pb-investigate), reviews with /pb-check breadth plus an independent cross-model frontier pass (Codex when Claude drives, Claude when Codex drives), feeds recurring patterns to /pb-evolve via the learning files, and proposes capturing repeatable work as a skill. Augmentation over blind automation.
+description: Spec-first feature implementation, the orchestration layer above the suite. Plans verification before writing code (routing /pb-cso, /pb-design-review, /pb-copy by what the change touches), interviews for missing context, gates high-risk work behind explicit human approval, drives every slice through the /pb-tdd RED→GREEN→REFACTOR loop, routes bounded bulk work to the cheapest capable sub-agents, reserves sanitization, evaluation, security/compliance judgment, and final synthesis for the strongest model, and reviews with /pb-check breadth plus the strongest currently available independent cross-model pass. Feeds recurring patterns to /pb-evolve via the learning files and proposes capturing repeatable work as a skill. Augmentation over blind automation.
 allowed-tools: [Bash, Read, Edit, Write, Glob, Grep, Task, AskUserQuestion]
 argument-hint: "[what to build]  [--spec <file>] [--interview] [--plan-only] [--no-parallel]"
 ---
 
 # pb-implement
 
-Build new behavior from a spec, not from assumptions. The front of the loop is a written spec and a verification plan; the back is a check that the plan actually passed. In between, every slice that needs code is driven through the `/pb-tdd` RED→GREEN→REFACTOR loop by its own sub-agent. This command owns the layer above the loop: spec, risk gating, slicing, parallel dispatch, and skill capture — `/pb-tdd` owns each slice.
+Build new behavior from a spec, not from assumptions. The front of the loop is a written spec and a verification plan; the back is a check that the plan actually passed. In between, every code slice follows the `/pb-tdd` RED→GREEN→REFACTOR loop. This command owns the layer above the loop: spec, risk gating, slicing, model allocation, parallel dispatch, and skill capture — `/pb-tdd` owns each slice.
 
-Workflow: `/pb-implement <what>` → spec + verification plan → (human gate if strict) → `/pb-tdd` loop per slice (in-process by default, sub-agents when they earn it) → verify against plan → `/pb-check` (suite review breadth) + independent cross-model frontier review (depth) → learning artifacts → `/pb-pr`/`/pb-ship`.
+Workflow: `/pb-implement <what>` → spec + verification plan → (human gate if strict) → `/pb-tdd` loop per slice (cheaper capable sub-agents for bounded bulk work, strongest model for critical work) → verify against plan → `/pb-check` (suite review breadth) + strongest available independent cross-model review (depth) → learning artifacts → `/pb-pr`/`/pb-ship`.
 
 It reuses the suite rather than duplicating it: per-slice discipline is `/pb-tdd`, the review fan-out is `/pb-check` (which routes to `/pb-cso`, `/pb-design-review`, `/pb-copy`, `/pb-qa` by what changed), stuck slices escalate to `/pb-investigate`, and recurring patterns feed `/pb-evolve` through the learning files.
 
@@ -43,7 +43,7 @@ Before building, write down how each behavior in the spec will be proven, and wi
 - **Automated, quantifiable** → tests via `/pb-tdd` (Vitest unit/integration, Playwright e2e). Default for anything with a deterministic right answer.
 - **Runtime / visual** → `/pb-qa <url>` for console/network/broken-image evidence, `/pb-browse <url>` for content, screenshots for layout.
 - **External state** → the relevant MCP tool (DB row via Supabase, event via PostHog, payment object via Stripe) to confirm the side effect actually landed.
-- **Specialist review, routed by what the change touches** → don't hand-pick a generic pass; read the project's `CLAUDE.md` trigger table and the areas the slices will touch, and add the matching review as a **mandatory** plan line: `src/lib/{ai,billing,auth}/` → `/pb-cso --diff`; `.tsx`/`.css`/tailwind → `/pb-design-review`; `marketing`/`landing`/user-facing copy → `/pb-copy --mode rewrite`; new env var or flag → `/pb-env-check`. Step 8 executes these (via `/pb-check`) plus a cross-model frontier review (step 8b). A billing slice without `/pb-cso --diff` in the plan is an incomplete plan.
+- **Specialist review, routed by what the change touches** → don't hand-pick a generic pass; read the project's `CLAUDE.md` trigger table and the areas the slices will touch, and add the matching review as a **mandatory** plan line: `src/lib/{ai,billing,auth}/` → `/pb-cso --diff`; `.tsx`/`.css`/tailwind → `/pb-design-review`; `marketing`/`landing`/user-facing copy → `/pb-copy --mode rewrite`; new env var or flag → `/pb-env-check`. Step 8 executes these (via `/pb-check`) plus the strongest available independent cross-model review (step 8b). A billing slice without `/pb-cso --diff` in the plan is an incomplete plan.
 
 **Taste test (augmentation vs automation).** For each behavior, decide: is the correct result quantifiable, or does it need human judgment (taste)? Apply the 80/20 rule — automate the check only when an 80%-correct result is acceptable for that behavior. Copy, visual polish, and tone are taste calls: plan a human look, not a brittle assertion that encodes one person's preference. Forcing taste into automation is how you accrue AI-slop and operational debt. Mark each behavior `auto` or `human-review` in the plan.
 
@@ -58,6 +58,10 @@ For strict-bucket work, surface the spec + verification plan and get explicit ap
 - **cancel** — stop, write nothing.
 
 This gate is non-negotiable for money, auth/tenant boundaries, retention/deletion, and secrets. Do not auto-proceed on these even when the change looks small — the blast radius, not the diff size, sets the risk. Light/skip buckets skip this gate.
+
+### 4.5. Model allocation
+
+Apply [`references/workflow-optimizations.md`](../references/workflow-optimizations.md). Use the cheapest capable sub-agent for bounded bulk implementation, mechanical edits, fixture/test setup, and routine checks. The strongest selected model must perform sanitization, evaluation, security/compliance judgment, and final synthesis itself. Sub-agents may return evidence or proposed patches, but they may not own a final judgment or critical sanitization/evaluation. If a bulk task crosses into a critical path, stop delegation and return it to the strongest model.
 
 ### 5. Decompose and parallelize
 
@@ -76,7 +80,7 @@ Every slice that needs code runs the `/pb-tdd` loop — the test-first contract 
 
 - Slices are genuinely independent (disjoint files) and parallelism materially cuts elapsed time.
 - A fresh evaluator or a specialist perspective is needed (that is the point of the review passes in step 8, and of competing implementations on one hard slice).
-- The work is bulk-mechanical and fans out cleanly.
+- The work is bulk-mechanical and fans out cleanly — dispatch it to the cheapest capable sub-agents; do not spend the strongest model on routine bulk work.
 
 Absent one of those, implement the coherent unit of work in-process, slice by slice, running the pb-tdd loop for each. A modern model carries a feature across implementation, tests, and integration more reliably than several isolated agents that lose local context and mis-wire interfaces at the seams — decomposition is a cost, not a default. A feature spanning several files is not by itself a reason to fan out.
 
@@ -97,7 +101,9 @@ The spec is the contract every agent shares. If an agent reports the spec was wr
 
 ### 7. Verify against the plan
 
-Run the verification plan from step 3 — actually execute it, don't assert from memory. Every `auto` behavior must have a green check; every `human-review` behavior gets surfaced for the user to eyeball with the evidence attached (screenshot, QA output, MCP row). Run the project's full gate (lint / typecheck / build / test — whatever `package.json` exposes) as a regression smoke. Anything red or unrun means not done.
+Run the verification plan from step 3 — actually execute it, don't assert from memory. Every `auto` behavior must have a green check; every `human-review` behavior gets surfaced for the user to eyeball with the evidence attached (screenshot, QA output, MCP row). Run the narrowest affected-package gate (lint / typecheck / test — whatever `package.json` exposes) during slices, then the full workspace gate at the pre-PR boundary or where CI/pre-push requires it. Anything red or unrun means not done.
+
+Apply [`references/workflow-optimizations.md`](../references/workflow-optimizations.md): for a monorepo, scope lint, typecheck, and tests to the changed package plus dependents during slices; run the full workspace gate only before the PR or where CI/pre-push requires it; skip local builds unless build configuration, package boundaries, bundling, or deployment behavior changed.
 
 ### 8. Review — suite breadth, then cross-model depth
 
@@ -105,22 +111,13 @@ Two passes, deliberately diverse. Don't re-implement what the suite already does
 
 **8a. Suite breadth — `/pb-check`.** Run `/pb-check` over the diff. It fans out the same-model reviewers the verification plan routed to — `/pb-review` always, plus `/pb-design-review` (UI), `/pb-cso --diff` (security-sensitive paths), `/pb-qa` (if a URL was given) — aggregates them under one severity model, and appends recurring patterns to `.claude/lessons.md`. This is the breadth pass: many lenses, one model.
 
-**8b. Cross-model depth.** Tests and same-model review both inherit the author's blind spots. So hand the diff to a reviewer from a **different model family than the one driving this session**, always at the **frontier tier** of that family — never a mid-tier model:
+**8b. Cross-model depth.** Tests and same-model review both inherit the author's blind spots. Choose the strongest currently available reviewer that is independent of the authoring model — do not use a fixed Claude→Codex, Codex→Claude, GLM/Grok, or named-model mapping. The user may pin `PB_CROSS_MODEL_REVIEW_MODEL` to the exact model ID; otherwise inspect the available model catalog for the selected review harness and choose the best current fit for the diff. Use a read-only/plan mode, and record the exact resolved model ID and harness.
 
-- Claude-driven session → Codex review via the `codex` review agent, on its frontier model (the CLI default when that is the top tier; pin `-m` only to *upgrade*, never to downgrade)
-- Codex-driven session → Claude review via `claude -p` on the frontier model (`claude --model claude-fable-5`; fall back to the top Opus only if Fable is unavailable)
+If the selected model or harness is unavailable, choose another currently available independent model. If no independent reviewer can be resolved, say so in the report; the cross-model pass remains unavailable and strict work remains blocked.
 
-**OpenCode fallback.** If the preferred Claude/Codex reviewer or its frontier model is unavailable, try OpenCode before declaring the cross-model pass unavailable. Require `PB_OPENCODE_REVIEW_MODEL` to contain an explicit `provider/model` id for a current frontier-tier **GLM or Grok** model that differs from the authoring model family. Confirm that exact id is available in `opencode models` (refresh the catalog if needed), then dispatch the same review prompt non-interactively through OpenCode's built-in read-only `plan` agent:
+Dispatch the review of the branch diff (vs the merge base) with the spec (`.context/spec-<slug>.md`) and risk bucket as context. Independence from the agents that wrote *and* reviewed the slices is the point. Record the **resolved model ID and harness** in the report, along with the reason it was selected as the strongest suitable independent reviewer.
 
-```bash
-opencode run --agent plan --model "$PB_OPENCODE_REVIEW_MODEL" --dir "$(git rev-parse --show-toplevel)" "<review prompt>"
-```
-
-Do not use OpenCode's default agent or model, and do not guess an unpinned id. If local configuration overrides `plan` to permit edits, OpenCode is unavailable, the variable is unset, the model cannot be resolved, the model is not frontier-tier, or it belongs to the authoring family, the cross-model pass **does not satisfy the gate** and remains a BLOCKER for strict work. OpenCode is the review harness; model-family independence still comes from the resolved GLM or Grok model. Record the exact resolved `provider/model` id, not merely "OpenCode".
-
-Dispatch the review of the branch diff (vs the merge base) with the spec (`.context/spec-<slug>.md`) and risk bucket as context. Independence from the agents that wrote *and* reviewed the slices is the point. Record the **resolved model id** in the report — a cross-model run on a mid-tier model does not satisfy the gate.
-
-**Dispatch it in the background.** A frontier-tier review of a real diff routinely runs past ten minutes, and a foreground call dies on the tool timeout with nothing to show — the usual recovery is to shrink the prompt until it fits, which quietly trades review depth for a passing call. Send it to a background task, write the output to a file, and carry on with the rest of step 8 while it runs. Read the result before the report; an unread cross-model pass is not a completed one.
+**Dispatch it in the background.** A long independent review of a real diff can run past ten minutes, and a foreground call can die on the tool timeout with nothing to show — the usual recovery is to shrink the prompt until it fits, which quietly trades review depth for a passing call. Send it to a background task, write the output to a file, and carry on with the rest of step 8 while it runs. Read the result before the report; an unread cross-model pass is not a completed one.
 
 **Do not hand the reviewer a checklist.** Give it the diff, what the change is trying to do, and the risk bucket — then ask it to find what is wrong. Naming the failure modes to look for (`check for fail-open paths, regex gaps, and race conditions`) reliably produces findings in exactly those categories and silence everywhere else, which reads as a clean review and is not one. The reason the gate requires a different model family is that a different family has different priors and notices different things; an enumerated prompt overwrites that with yours, and the pass degrades into a slower search for the blind spots you already had. Say *where* to look when it is not obvious from the diff ("this is the safety layer", "this path handles other tenants' rows") — never *what* to find. The signal that the prompt was neutral is a finding you did not anticipate.
 
@@ -130,7 +127,7 @@ Triage every finding from both passes through the suite severity model — do no
 - **IMPORTANT** — surface with your assessment; ask before acting (taste / completeness call).
 - **NIT** — mention once; fix only if asked.
 
-A reviewer (suite or cross-model) is not an oracle: discard findings that are wrong or out of scope, but say *why* — don't silently drop one you can't refute. If both the preferred reviewer and the OpenCode fallback are unavailable, say so in the report and note the cross-model pass did not run; `/pb-check` still ran, so review did not collapse to nothing.
+A reviewer (suite or cross-model) is not an oracle: discard findings that are wrong or out of scope, but say *why* — don't silently drop one you can't refute. If no independent reviewer can be resolved after checking the available options, say so in the report and note the cross-model pass did not run; `/pb-check` still ran, so review did not collapse to nothing.
 
 ### 9. Report
 
@@ -174,7 +171,10 @@ If this implementation followed a shape you'll repeat (same setup, same checks, 
 - **Contract skipped, not the agent.** Implementing in-process is fine and often better — dropping the pb-tdd loop is not. The failure mode is "quick" slices that skip RED or skip the risk-bucket gate because no sub-agent was there to enforce them. In-process means the orchestrator runs the loop itself, per slice, with the RED recorded; it does not mean writing code first and a passing test after.
 - **Fanning out by reflex.** Spawning one agent per file because a feature touches several is decomposition for its own sake. Isolated agents lose the shared context that keeps interfaces consistent and re-wire the seams wrong. Fan out only for genuine independence, parallel time savings, a fresh evaluator, or a specialist perspective (step 6) — otherwise carry the unit of work coherently.
 - **Cross-model review prompted with a checklist.** Listing the failure modes to look for returns findings in those categories and silence outside them — a clean-looking review that only searched where you pointed. The different model family is there for its different priors; an enumerated prompt replaces them with yours. Give it the diff and the intent, and let it decide what matters.
+- **Fixed cross-model routing.** Do not map the authoring model to a named reviewer family or stale model. Select the strongest currently available independent reviewer, allow an explicit model pin, and record the resolved model ID.
+- **Expensive model used for bulk work.** Dispatch bounded mechanical work and routine checks to the cheapest capable sub-agent. Keep sanitization, evaluation, security/compliance judgment, and final synthesis in the strongest model; sub-agents provide evidence or proposals only.
 - **Cross-model review rubber-stamped or pasted raw.** The review is verification, not decoration. Dumping the other model's output verbatim, or accepting "looks good" without reading it, defeats the cross-model check. Triage every finding through the severity model, fix real BLOCKERs test-first, and state why anything dismissed was dismissed — a finding you can't refute is a finding you act on.
+- **Cross-model review loop fatigue.** Freeze the diff and run the independent review once before ship. Triage `BLOCKER` / `IMPORTANT` / `NIT`, fix confirmed BLOCKERs in one batch, and do not re-run after every micro-fix. Re-run only after a material scope change or an unresolved correctness question; IMPORTANT and NIT findings do not block unless the user promotes them.
 - **Skipping the routed specialist review.** A billing diff that gets only `/pb-review` and the cross-model pass, but no `/pb-cso --diff`, was under-reviewed — the security lens the suite already has for that path never ran. The verification plan routes by what the change touches (step 3); `/pb-check` then runs those reviews. Don't quietly drop one because the slice "looked fine."
 - **Re-deriving instead of routing.** Hand-rolling a security check, a debugging loop, or a learning note inside this command duplicates `/pb-cso`, `/pb-investigate`, `/pb-evolve` — and drifts from them the moment one changes. Call the skill; if it's missing something, improve that skill.
 - **Automating taste.** Encoding "the button should feel right" as a pixel assertion produces a brittle test that fails on every legitimate change and passes things that look wrong. If the right answer needs a human eye, mark it `human-review` and show evidence — don't fake a green check.
