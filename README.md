@@ -40,6 +40,7 @@ pb-suite/
     ai-writing-signals.md  pb-copy AI-slop ruleset — tells, confidence gate, vocab list
     house-review-lens.md   shared cold-target-user review lens for pb-copy/pb-design-review/pb-pop
     seo-signals.md   pb-pop scoring rules — weights, bands, schema catalog, sector strictness
+    workflow-optimizations.md  global command ladder, gate timing, and model allocation
   tests/             bash smoke tests for install mechanics and content invariants
   install            symlink commands/ into ~/.claude/commands/, install deps
   uninstall          remove only symlinks that point back to this repo
