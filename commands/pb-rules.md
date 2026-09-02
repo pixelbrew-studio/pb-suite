@@ -65,8 +65,14 @@ Triggers — apply unless the user explicitly opts out:
 
 | When | Run |
 |---|---|
+| Planning a slice or feature | `/pb-tdd --slice-only` or `/pb-implement --plan-only` |
 | Tiny deterministic fix (one behavior, clear test) | `/pb-tdd <slice>` |
 | Nontrivial feature or refactor | `/pb-implement <objective>` — it plans verification and routes TDD, investigation, and specialist review by what the change touches |
+| Mid-feature checkpoint | `/pb-review` after a slice; defer `/pb-check` until the diff is ready |
+| Before PR | `/pb-check` once on the frozen diff, or targeted specialist reviews |
+| Per-slice verification | Scope lint, typecheck, and tests to the changed package plus dependents; reserve the full workspace gate for pre-PR or CI/pre-push |
+| Implementation default | `/pb-implement --no-parallel` unless slices own disjoint files and parallelism materially helps; prefer in-process slices |
+| Model allocation | Bulk/mechanical work uses the cheapest capable sub-agent; the strongest selected model handles sanitization, evaluation, and final synthesis |
 | Strict path (AI request, billing/credits, auth/tenant, storage/retention, secrets) | strict `/pb-implement` — human gate + mandatory cross-model review |
 | Touching files under `src/lib/ai/`, `src/lib/billing/`, `src/lib/auth/` | `/pb-cso --diff` before opening a PR |
 | Touching UI files (`.tsx`, `.css`, tailwind config) | `/pb-design-review` before opening a PR |
@@ -75,7 +81,7 @@ Triggers — apply unless the user explicitly opts out:
 | Touching `marketing/`, `landing/`, or SEO pages (discoverability, not just tone) | `/pb-pop <url\|file>` before opening a PR — score for search / AI citability |
 | Debugging a reproducible bug | `/pb-investigate` before editing — no fix without root cause |
 | Drafting a PR | `/pb-pr` (refuse `--no-verify` and `--force`) |
-| Pre-merge | `/pb-ship` (refuse the merge if BLOCKERs remain) |
+| Pre-merge | `/pb-ship` once, at merge time (refuse the merge if BLOCKERs remain) |
 | Live QA of a deploy | `/pb-qa <url>` for evidence, then `/pb-investigate` for cause |
 | Fetching URL content | `/pb-browse <url>` instead of WebFetch |
 | Branch name encodes a tracker key (e.g. `ABC-123-foo`) | `/pb-pr` will seed the summary from the ticket and append `Closes <KEY>` |

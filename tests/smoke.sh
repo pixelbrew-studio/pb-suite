@@ -311,25 +311,26 @@ assert "pb-ship trusts required CI and separately preserves migration parity" "$
 grep -q 'Skip preview infrastructure entirely' commands/pb-ship.md
 assert "pb-ship skips preview infrastructure when no app changed" "$?"
 
-# Cross-model review keeps an independent frontier fallback when the preferred
-# Claude/Codex reviewer is unavailable.
-grep -q 'OpenCode fallback' commands/pb-implement.md \
-  && grep -q 'opencode run --agent plan --model' commands/pb-implement.md \
-  && grep -qE 'GLM.*Grok|Grok.*GLM' commands/pb-implement.md
-assert "pb-implement supports an OpenCode GLM/Grok fallback" "$?"
+# Cross-model review selects the strongest current independent model without
+# hard-coding a family or named-model fallback.
+grep -q 'strongest currently available reviewer' commands/pb-implement.md \
+  && grep -q 'PB_CROSS_MODEL_REVIEW_MODEL' commands/pb-implement.md \
+  && grep -q 'read-only/plan mode' commands/pb-implement.md
+assert "pb-implement selects a model-agnostic independent reviewer" "$?"
 
-grep -q 'OpenCode fallback' commands/pb-ship.md \
-  && grep -q 'opencode run --agent plan --model' commands/pb-ship.md \
-  && grep -qE 'GLM.*Grok|Grok.*GLM' commands/pb-ship.md
-assert "pb-ship enforces the OpenCode GLM/Grok fallback" "$?"
+grep -q 'strongest currently available reviewer' commands/pb-ship.md \
+  && grep -q 'PB_CROSS_MODEL_REVIEW_MODEL' commands/pb-ship.md \
+  && grep -q 'read-only/plan mode' commands/pb-ship.md
+assert "pb-ship selects a model-agnostic independent reviewer" "$?"
 
-grep -qE 'read-only.*plan|plan.*read-only' commands/pb-implement.md
-assert "OpenCode fallback explains why the plan agent is pinned" "$?"
+! grep -q 'OpenCode fallback\|PB_OPENCODE_REVIEW_MODEL' commands/pb-implement.md \
+  && ! grep -q 'OpenCode fallback\|PB_OPENCODE_REVIEW_MODEL' commands/pb-ship.md
+assert "cross-model review has no stale named fallback" "$?"
 
-grep -q 'PB_OPENCODE_REVIEW_MODEL' commands/pb-implement.md \
-  && grep -q 'provider/model' commands/pb-implement.md \
-  && grep -qE 'remain(s)? (a )?BLOCKER|does not satisfy the gate' commands/pb-implement.md
-assert "OpenCode fallback requires an explicit frontier model or stays blocked" "$?"
+grep -q 'PB_CROSS_MODEL_REVIEW_MODEL' commands/pb-implement.md \
+  && grep -q 'strict work remains blocked' commands/pb-implement.md \
+  && grep -q 'no independent reviewer can be resolved' commands/pb-ship.md
+assert "cross-model review stays blocked without an independent model" "$?"
 
 grep -q 'cil_linear_ticket_from_branch\|TICKET=' commands/pb-pr.md
 assert "pb-pr extracts tracker key from branch" "$?"

@@ -78,6 +78,8 @@ If no URL: log "skipped — no URL given" and continue.
 
 Build one combined finding table across the passes:
 
+The strongest selected model in the main session owns aggregation, severity triage, and final acceptance. Review passes and sub-agents provide evidence only; they cannot approve the change or make the final evaluation. Any sanitization or evaluation behavior covered by the diff must also be handled by the strongest selected model itself.
+
 - **Cross-reference by file**: a file flagged by multiple passes is interesting — escalate its visible severity to the highest among them. Note which passes flagged it.
 - **Cross-reference by root**: a missing auth check appearing in both `pb-review` (code path) and `pb-cso` (OWASP A01) is the same finding seen from two angles. Bundle them.
 - **De-duplicate**: identical content from two passes (rare, but happens with the design-review/UX-design overlap) — keep one, mark which pass(es) saw it.
