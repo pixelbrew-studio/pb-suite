@@ -20,7 +20,7 @@ TARGET=""; KIND="auto"; EXTRA_PAGES=""; MODEL="${PB_ROAST_MODEL:-}"; OUT=""; TON
 # --model overrides PB_ROAST_MODEL for this run.
 ```
 
-Stop if no target. Stop if `MODEL` is empty after arg parsing — same contract as `pb-implement`'s cross-model pass: no guessed default, the user pins the id. Error message must suggest running `opencode models | grep -i grok` to pick a current Grok id. `--tone dry` softens delivery (still specific), `--tone sober` drops the punchlines entirely (analysis-only). Default `brutal`.
+Stop if no target. Stop if `MODEL` is empty after arg parsing — no guessed default; the user pins the id via `PB_ROAST_MODEL` or `--model`. Error message must suggest running `opencode models | grep -i grok` to pick a current Grok id. `--tone dry` softens delivery (still specific), `--tone sober` drops the punchlines entirely (analysis-only). Default `brutal`.
 
 ### 2. Resolve the target kind
 

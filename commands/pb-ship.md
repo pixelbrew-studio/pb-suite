@@ -59,7 +59,13 @@ Do not run lint, typecheck, build, or the full test suite locally when required 
 
 Classify the diff using the project's `## Workflow (pb-suite)` risk buckets and `## pb-suite: load-bearing files` globs. Standard CRUD, tooling, docs, copy, and visual-only changes skip this step.
 
-For a strict or load-bearing diff, choose the strongest currently available reviewer that is independent of the authoring model. Do not use a fixed family or named-model mapping. The user may pin `PB_CROSS_MODEL_REVIEW_MODEL` to the exact model ID; otherwise inspect the available model catalog for the selected review harness and choose the best current fit for the diff. Use a read-only/plan mode, give it the diff, intent, and risk bucket, then ask what is wrong. Do not give it a failure-mode checklist. Dispatch long reviews in the background, read the result, record the resolved model ID and harness, and triage findings through the suite severity model. If no independent reviewer can be resolved, the cross-model pass does not satisfy the gate and strict work remains blocked. Any BLOCKER stops the gate.
+For a strict or load-bearing diff, run a cross-model review — but confirm the reviewer explicitly; there is no fixed family mapping and no env pin that skips the question.
+
+**Pick the model first.** List currently available models from the review harness catalog (e.g. `opencode models`). From that live list only — never a remembered ID, env pin, or stale default — suggest the strongest suitable model that is independent of the authoring model, with a one-line reason. Ask via `AskUserQuestion`: use the suggestion, pick another catalog entry, or skip. Do not dispatch without an explicit choice; do not honour `PB_CROSS_MODEL_REVIEW_MODEL` or any other pin that bypasses the question.
+
+Confirm the chosen ID exists in the catalog. If it does not, report and re-ask; do not substitute another model silently. If the user declines or no model is chosen, the cross-model pass does not satisfy the gate and strict work remains blocked.
+
+Use a read-only/plan mode, give it the diff, intent, and risk bucket, then ask what is wrong. Do not give it a failure-mode checklist. Dispatch long reviews in the background, read the result, record the resolved model ID and harness, and triage findings through the suite severity model. Any BLOCKER stops the gate.
 
 The strongest selected model in the main session owns final evaluation, sanitization, severity triage, and the merge recommendation. Sub-agents may collect CI, preview, or review evidence, but cannot approve strict work or make the final sanitization/evaluation judgment.
 
